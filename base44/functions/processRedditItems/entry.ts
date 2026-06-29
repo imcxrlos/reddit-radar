@@ -70,17 +70,18 @@ CRITICAL INSTRUCTIONS:
    - If the post is about a news event, government policy, or political topic (e.g., DOGE cuts, federal layoffs), score 0-20 — these are NOT leads.
 
 4. CLIENT MATCHING — Match the post to the BEST single client based on ALL THREE:
-   - Location overlap: the detected location must fall within the client's service area. If NO location is detected and the client serves specific cities, do NOT match.
+   - LOCATION: The detected location MUST appear in the client's "locations" array. Check the actual array — if the client's locations are ["Atlanta, GA", "Marietta, GA"] and the post mentions Ohio, that is NOT a match. Do NOT assume a national footprint. Do NOT claim a location "falls within" a service area unless that exact city or state is listed. If NO location is detected, or the detected location is NOT in the client's locations array, do NOT match — no exceptions.
    - Practice area match: the post's topic must fit the client's ACTUAL category and services (see domain rules above).
    - Personal need: the poster must be describing their own situation, not discussing a topic in general.
    If ANY of these three fail, leave matched_client_id EMPTY. A non-match is better than a wrong match.
 
 5. MATCH REASONING — In match_reasoning, give a FACTUALLY ACCURATE explanation of WHY this client was matched. Every bullet must be true and specific to THIS post — do not use generic template language. Format as newline-separated bullets:
-   "• Location: <city, state> falls within <client name>'s service area
+   "• Location: <city, state> is listed in <client name>'s locations array: [<actual array values>]
    • Practice area: <specific topic from post> matches client's <specific service or category>
    • Intent: <one concrete sentence quoting or paraphrasing what the poster said that shows they need help>
    • Keywords matched: <list which of the client's keywords are relevant>"
-   If location was NOT detected, say "• Location: none detected — cannot confirm service area match" and do NOT match the client.
+   If the detected location is NOT in the client's locations array, say "• Location: <detected location> is NOT in <client name>'s service area (serves: <actual array>)" and do NOT match the client.
+   If no location was detected, say "• Location: none detected — cannot confirm service area match" and do NOT match the client.
    Never invent connections or stretch a topic to fit. If the reasoning feels forced, the match is wrong.
 
 6. DRAFT RESPONSE — Write a helpful, natural reply tailored to the matched client's response tone. Sound like a real person genuinely helping — not salesy or spammy. Offer useful advice and mention the client's services only if relevant and natural. 3-5 sentences max.
