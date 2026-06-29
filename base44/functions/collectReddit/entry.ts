@@ -257,7 +257,8 @@ function buildRedditItem(post) {
   }
 
   const isComment = post?.name?.startsWith('t1_') || !post?.title;
-  const permalink = post?.permalink ? `https://www.reddit.com${post.permalink}` : '';
+  const idPermalink = `https://www.reddit.com/comments/${id}`;
+  const permalink = post?.permalink ? `https://www.reddit.com${post.permalink}` : idPermalink;
   const url = post?.url || permalink;
 
   return {
