@@ -131,7 +131,7 @@ const ScraperHtmlProvider = {
   },
 
   async searchByKeyword(keyword) {
-    const url = `https://old.reddit.com/search?q=${encodeURIComponent(keyword)}&sort=new&t=week`;
+    const url = `https://old.reddit.com/search?q=${encodeURIComponent(keyword)}&sort=new&t=month`;
     const html = await this._fetchHtml(url);
     return this._parseSearchPage(html);
   },
@@ -243,7 +243,7 @@ function getRedditProvider() {
 
 // ─── Shared Transform: raw Reddit post → app RedditItem ───
 // Only collect posts from the last 7 days
-const MAX_AGE_DAYS = 7;
+const MAX_AGE_DAYS = 30;
 const MAX_AGE_MS = MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
 
 function buildRedditItem(post) {
