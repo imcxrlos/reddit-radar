@@ -14,23 +14,25 @@ export default function StatsCards({ opportunities }) {
     : 0;
 
   const cards = [
-    { label: 'New Today', value: todayCount, icon: CalendarDays, color: 'text-blue-500' },
-    { label: 'This Week', value: weekCount, icon: TrendingUp, color: 'text-green-500' },
-    { label: 'Avg Intent', value: avgIntent, icon: Target, color: 'text-orange-500' },
-    { label: 'Total Leads', value: opportunities.length, icon: ListChecks, color: 'text-purple-500' },
+    { label: 'New Today', value: todayCount, icon: CalendarDays, accent: 'text-blue-500', bg: 'bg-blue-50' },
+    { label: 'This Week', value: weekCount, icon: TrendingUp, accent: 'text-emerald-500', bg: 'bg-emerald-50' },
+    { label: 'Avg Intent', value: avgIntent, icon: Target, accent: 'text-orange-500', bg: 'bg-orange-50' },
+    { label: 'Total Leads', value: opportunities.length, icon: ListChecks, accent: 'text-violet-500', bg: 'bg-violet-50' },
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {cards.map(card => {
         const Icon = card.icon;
         return (
-          <div key={card.label} className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-medium text-gray-500">{card.label}</span>
-              <Icon className={`w-4 h-4 ${card.color}`} />
+          <div key={card.label} className="card-premium p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className={`w-9 h-9 rounded-xl ${card.bg} flex items-center justify-center`}>
+                <Icon className={`w-[18px] h-[18px] ${card.accent}`} strokeWidth={2.5} />
+              </div>
             </div>
-            <div className="text-2xl font-bold text-gray-900">{card.value}</div>
+            <div className="text-[28px] font-semibold text-foreground tracking-tight leading-none">{card.value}</div>
+            <div className="text-[13px] text-muted-foreground mt-1.5 font-medium">{card.label}</div>
           </div>
         );
       })}

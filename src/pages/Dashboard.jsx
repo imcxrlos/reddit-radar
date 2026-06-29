@@ -66,7 +66,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="w-8 h-8 border-4 border-gray-200 border-t-slate-800 rounded-full animate-spin"></div>
+        <div className="w-7 h-7 border-[2.5px] border-border border-t-accent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -74,17 +74,17 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">{error}</div>
+        <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-red-600 text-sm">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-5">
+    <div className="p-6 md:p-10 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{filtered.length} opportunities found</p>
+          <h1 className="text-[28px] font-semibold text-foreground tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">{filtered.length} opportunities found</p>
         </div>
       </div>
       <StatsCards opportunities={opportunities} />

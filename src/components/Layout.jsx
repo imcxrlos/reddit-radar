@@ -9,33 +9,36 @@ export default function Layout() {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <aside className="w-16 md:w-60 bg-slate-900 text-white flex flex-col shrink-0">
-        <div className="p-4 md:p-5 flex items-center justify-center md:justify-start border-b border-slate-800">
-          <Radar className="w-6 h-6 text-orange-500 shrink-0" />
-          <span className="hidden md:block text-base font-semibold ml-2.5 tracking-tight">LeadRadar</span>
+    <div className="flex h-screen bg-[hsl(220,14%,98%)]">
+      <aside className="w-16 md:w-64 bg-card flex flex-col shrink-0 border-r border-border">
+        <div className="px-4 md:px-5 py-5 flex items-center justify-center md:justify-start">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shrink-0">
+              <Radar className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
+            </div>
+            <span className="hidden md:block text-[15px] font-semibold tracking-tight text-foreground">LeadRadar</span>
+          </div>
         </div>
-        <nav className="flex-1 px-2 md:px-3 py-4">
+        <nav className="flex-1 px-2 md:px-3 py-2">
           {navItems.map(item => {
             const Icon = item.icon;
-            const active = location.pathname === item.path;
+            const active = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-2 md:px-3 py-2.5 rounded-lg text-sm font-medium mb-1 transition-colors justify-center md:justify-start ${
-                  active ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium mb-0.5 transition-all justify-center md:justify-start ${
+                  active
+                    ? 'bg-secondary text-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
                 }`}
               >
-                <Icon className="w-4 h-4 shrink-0" />
+                <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={active ? 2.5 : 2} />
                 <span className="hidden md:block">{item.label}</span>
               </Link>
             );
           })}
         </nav>
-        <div className="p-3 border-t border-slate-800">
-          <p className="hidden md:block text-xs text-slate-500 text-center">Internal Tool</p>
-        </div>
       </aside>
       <main className="flex-1 overflow-auto">
         <Outlet />

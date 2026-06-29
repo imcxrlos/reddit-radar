@@ -95,51 +95,56 @@ export default function ClientForm() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="w-8 h-8 border-4 border-gray-200 border-t-slate-800 rounded-full animate-spin"></div>
+        <div className="w-7 h-7 border-[2.5px] border-border border-t-accent rounded-full animate-spin"></div>
       </div>
     );
   }
 
-  const inputCls = "w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10";
-  const labelCls = "block text-sm font-medium text-gray-700 mb-1.5";
+  const inputCls = "w-full px-3.5 py-2.5 border border-border rounded-xl text-sm bg-card focus:outline-none focus:ring-2 focus:ring-accent/15 transition-all";
+  const labelCls = "block text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wider";
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto">
-      <div className="flex items-center gap-3 mb-5">
-        <button onClick={() => navigate('/clients')} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+    <div className="p-6 md:p-10 max-w-3xl mx-auto">
+      <div className="flex items-center gap-4 mb-8">
+        <button onClick={() => navigate('/clients')} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-bold text-gray-900">{isEdit ? 'Edit Client' : 'New Client'}</h1>
+        <div>
+          <h1 className="text-[24px] font-semibold text-foreground tracking-tight">{isEdit ? 'Edit Client' : 'New Client'}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{isEdit ? 'Update client details' : 'Add a new client to monitor'}</p>
+        </div>
       </div>
 
-      {error && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm mb-4">{error}</div>}
+      {error && <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-red-600 text-sm mb-5">{error}</div>}
 
       {!isEdit && (
-        <div className="bg-gradient-to-br from-slate-50 to-orange-50/50 border border-orange-200 rounded-xl p-5 mb-4">
+        <div className="rounded-2xl border border-accent/20 p-6 mb-5 bg-gradient-to-br from-accent/5 to-accent/0">
           <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-orange-500" />
-            <h3 className="text-sm font-semibold text-gray-900">AI Onboarding Assistant</h3>
+            <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-accent" />
+            </div>
+            <h3 className="text-sm font-semibold text-foreground">AI Onboarding Assistant</h3>
           </div>
-          <p className="text-xs text-gray-600 mb-4">Enter your business details and let AI suggest keywords, subreddits, locations, services, and competitors. You can edit everything before saving.</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+          <p className="text-[13px] text-muted-foreground mb-4 leading-relaxed">Enter your business details and let AI suggest keywords, subreddits, locations, services, and competitors. You can edit everything before saving.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
             <input value={aiName} onChange={e => setAiName(e.target.value)} className={inputCls} placeholder="Business name" />
             <input value={aiWebsite} onChange={e => setAiWebsite(e.target.value)} className={inputCls} placeholder="Website (optional)" />
             <input value={aiIndustry} onChange={e => setAiIndustry(e.target.value)} className={inputCls} placeholder="Industry (e.g. Personal Injury)" />
           </div>
-          <button type="button" onClick={handleAiOnboard} disabled={aiLoading} className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50">
+          <button type="button" onClick={handleAiOnboard} disabled={aiLoading} className="inline-flex items-center gap-2 px-4 py-2.5 bg-accent text-white rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-all">
             {aiLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Researching...</> : <><Sparkles className="w-4 h-4" /> Generate Suggestions</>}
           </button>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="card-premium p-8 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <label className={labelCls}>Client Name *</label>
+            <label className={labelCls}>Client Name</label>
             <input required value={form.name} onChange={e => update('name', e.target.value)} className={inputCls} placeholder="Charlotte Injury Lawyers" />
           </div>
           <div>
-            <label className={labelCls}>Category *</label>
+            <label className={labelCls}>Category</label>
             <select required value={form.category} onChange={e => update('category', e.target.value)} className={inputCls}>
               <option value="">Select...</option>
               {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
@@ -179,14 +184,14 @@ export default function ClientForm() {
           <textarea value={form.notes || ''} onChange={e => update('notes', e.target.value)} rows={3} className={inputCls} placeholder="Internal notes about this client..." />
         </div>
         <div className="flex items-center gap-2">
-          <input type="checkbox" id="active" checked={form.is_active} onChange={e => update('is_active', e.target.checked)} className="rounded" />
-          <label htmlFor="active" className="text-sm text-gray-700">Active (include in Reddit monitoring)</label>
+          <input type="checkbox" id="active" checked={form.is_active} onChange={e => update('is_active', e.target.checked)} className="rounded w-4 h-4 accent-accent" />
+          <label htmlFor="active" className="text-sm text-muted-foreground">Active (include in Reddit monitoring)</label>
         </div>
         <div className="flex items-center gap-3 pt-2">
-          <button type="submit" disabled={saving} className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 disabled:opacity-50">
+          <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">
             <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Client'}
           </button>
-          <button type="button" onClick={() => navigate('/clients')} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+          <button type="button" onClick={() => navigate('/clients')} className="btn-secondary">
             Cancel
           </button>
         </div>
