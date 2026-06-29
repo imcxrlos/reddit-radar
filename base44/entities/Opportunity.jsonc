@@ -51,6 +51,20 @@
     "detected_category": {
       "type": "string"
     },
+    "category_confidence": {
+      "type": "number",
+      "default": 0
+    },
+    "alternate_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "needs_review": {
+      "type": "boolean",
+      "default": false
+    },
     "detected_service": {
       "type": "string"
     },
