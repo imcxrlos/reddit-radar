@@ -85,17 +85,19 @@ INTENT SCORING (0-100):
 - 50-79: Discusses a relevant personal situation but not actively seeking help yet
 - 0-49: News, politics, general discussion, hypothetical, or no personal need
 
-CLIENT MATCHING — Only attempt if needs_review is false AND detected_category is set:
-- LOCATION: The detected location MUST appear in the client's "locations" array. Check the actual array values. Do NOT assume a national footprint. If the detected location is NOT in the client's locations array, do NOT match.
-- Practice area: the detected_category must match the client's category field.
+CLIENT MATCHING — Only attempt if needs_review is false AND detected_category is set. Three gates, ALL must pass:
+1. PRACTICE AREA: detected_category must match the client's category field (broad filter).
+2. SERVICE MATCH (critical, most important): The specific need in the post must align with one of the client's "services" entries. Read the services array LITERALLY. A client who only handles "Car accidents" must NOT match a medical malpractice, dog bite, or slip-and-fall post, even though all are Personal Injury. If the specific need is not explicitly listed in the client's services, do NOT match.
+3. LOCATION: The detected location MUST appear in the client's "locations" array. Check the actual array values. Do NOT assume a national footprint. If the detected location is NOT in the client's locations array, do NOT match.
 - Personal need: the poster must be describing their own situation.
-- If ANY of these fail, leave matched_client_id EMPTY. A non-match is better than a wrong match.
+- If ANY gate fails, leave matched_client_id EMPTY. A non-match is always better than a wrong match.
 
 MATCH REASONING — FACTUALLY ACCURATE bullets, specific to THIS post (no generic template language):
-"• Location: <city, state> is listed in <client name>'s locations array: [<actual array values>]
-• Practice area: <specific topic from post> matches client's <specific service or category>
-• Intent: <one concrete sentence quoting or paraphrasing what the poster said that shows they need help>
-• Keywords matched: <list which of the client's keywords are relevant>"
+"• Practice area: <detected category> matches client's category (<client category>)
+• Service match: <specific need from post> matches client's service: <exact entry from their services array>
+• Location: <city, state> is listed in <client name>'s locations array: [<actual array values>]
+• Intent: <one concrete sentence quoting or paraphrasing what the poster said that shows they need help>"
+If the specific need is NOT in the client's services array, say "• Service: <need> is NOT in <client name>'s services (offers: <actual array>)" and do NOT match.
 If the detected location is NOT in the client's locations array, say "• Location: <detected location> is NOT in <client name>'s service area (serves: <actual array>)" and do NOT match.
 If no location was detected, say "• Location: none detected — cannot confirm service area match" and do NOT match.
 
