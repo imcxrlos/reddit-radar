@@ -58,8 +58,8 @@ export default function OpportunityTable({ opportunities }) {
               return (
                 <tr key={o.id} className="hover:bg-muted/30 transition-colors group">
                   <td className="px-4 py-3.5"><IntentBadge score={o.intent_score} /></td>
-                  <td className="px-4 py-3.5 text-sm max-w-md">
-                    <Link to={`/opportunity/${o.id}`} className="text-foreground hover:text-accent font-medium transition-colors block truncate max-w-md">
+                  <td className="px-4 py-3.5 text-sm max-w-xs">
+                    <Link to={`/opportunity/${o.id}`} className="text-foreground hover:text-accent font-medium transition-colors block truncate max-w-xs">
                       {o.reddit_title || 'Untitled'}
                     </Link>
                     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -73,7 +73,7 @@ export default function OpportunityTable({ opportunities }) {
                       )}
                       <span className="text-[11px] text-muted-foreground">{timeAgo(o.created_date)}</span>
                     </div>
-                    {o.ai_summary && <p className="text-xs text-muted-foreground truncate max-w-md mt-1">{o.ai_summary}</p>}
+                    {o.ai_summary && <p className="text-xs text-muted-foreground truncate max-w-xs mt-1">{o.ai_summary}</p>}
                   </td>
                   <td className="px-4 py-3.5 text-sm font-medium text-foreground whitespace-nowrap">{o.client_name || '—'}</td>
                   <td className="px-4 py-3.5"><StatusBadge status={o.status} /></td>
