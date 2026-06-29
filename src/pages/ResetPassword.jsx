@@ -60,7 +60,7 @@ export default function ResetPassword() {
       subtitle="Enter your new password below"
     >
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 backdrop-blur-sm text-destructive text-sm">
           {error}
         </div>
       )}
@@ -77,7 +77,7 @@ export default function ResetPassword() {
               placeholder="••••••••"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="pl-10 h-12"
+              className="pl-10 h-12 bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 backdrop-blur-md"
               required
             />
           </div>
@@ -93,7 +93,7 @@ export default function ResetPassword() {
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="pl-10 h-12"
+              className="pl-10 h-12 bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 backdrop-blur-md"
               required
             />
           </div>

@@ -48,7 +48,7 @@ export default function Login() {
     >
       <Button
         variant="outline"
-        className="w-full h-12 text-sm font-medium mb-6"
+        className="w-full h-12 text-sm font-medium mb-6 bg-white/50 dark:bg-white/5 border-white/40 dark:border-white/10 backdrop-blur-md hover:bg-white/70 dark:hover:bg-white/10"
         onClick={handleGoogle}
       >
         <GoogleIcon className="w-5 h-5 mr-2" />
@@ -57,15 +57,15 @@ export default function Login() {
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
+          <div className="w-full border-t border-white/20 dark:border-white/10" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
+          <span className="bg-white/70 dark:bg-white/10 backdrop-blur-sm px-3 text-muted-foreground">or</span>
         </div>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+        <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 backdrop-blur-sm text-destructive text-sm">
           {error}
         </div>
       )}
@@ -83,7 +83,7 @@ export default function Login() {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 h-12"
+              className="pl-10 h-12 bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 backdrop-blur-md"
               required
             />
           </div>
@@ -104,7 +104,7 @@ export default function Login() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 h-12"
+              className="pl-10 h-12 bg-white/60 dark:bg-white/5 border-white/40 dark:border-white/10 backdrop-blur-md"
               required
             />
           </div>
