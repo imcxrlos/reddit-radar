@@ -10,7 +10,7 @@ export default function AuthLayout({ icon: Icon, title, subtitle, footer, childr
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <motion.div
           className="absolute -top-32 -left-24 w-[28rem] h-[28rem] rounded-full blur-[100px] opacity-40 dark:opacity-30"
-          style={{ background: "radial-gradient(circle, hsl(24 95% 53%), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, hsl(142 71% 45%), transparent 70%)" }}
           animate={{ x: [0, 40, 0], y: [0, 30, 0] }}
           transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -44,8 +44,8 @@ export default function AuthLayout({ icon: Icon, title, subtitle, footer, childr
             transition={{ delay: 0.1, duration: 0.5, ease: EASE }}
             className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
             style={{
-              background: "hsl(24 95% 53%)",
-              boxShadow: "0 10px 30px -6px hsl(24 95% 53% / 0.5)",
+              background: "hsl(142 71% 45%)",
+              boxShadow: "0 10px 30px -6px hsl(142 71% 45% / 0.5)",
             }}
           >
             <Icon className="w-7 h-7 text-white" aria-hidden="true" />
