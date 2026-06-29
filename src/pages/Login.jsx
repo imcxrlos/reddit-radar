@@ -17,10 +17,6 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!/@everconvert\.com$/i.test(email.trim())) {
-      setError("Only @everconvert.com accounts can sign in.");
-      return;
-    }
     setLoading(true);
     try {
       await base44.auth.loginViaEmailPassword(email, password);
