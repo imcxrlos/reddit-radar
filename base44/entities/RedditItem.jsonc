@@ -1,0 +1,46 @@
+{
+  "name": "RedditItem",
+  "type": "object",
+  "properties": {
+    "reddit_id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "post",
+        "comment"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string"
+    },
+    "author": {
+      "type": "string"
+    },
+    "subreddit": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "permalink": {
+      "type": "string"
+    },
+    "reddit_created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "processed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "reddit_id",
+    "subreddit"
+  ]
+}

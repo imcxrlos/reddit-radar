@@ -1,0 +1,84 @@
+{
+  "name": "Opportunity",
+  "type": "object",
+  "properties": {
+    "reddit_item_id": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "reddit_title": {
+      "type": "string"
+    },
+    "reddit_url": {
+      "type": "string"
+    },
+    "reddit_body": {
+      "type": "string"
+    },
+    "subreddit": {
+      "type": "string"
+    },
+    "author": {
+      "type": "string"
+    },
+    "is_lead": {
+      "type": "boolean",
+      "default": true
+    },
+    "intent_score": {
+      "type": "number",
+      "default": 0
+    },
+    "detected_location": {
+      "type": "string"
+    },
+    "detected_state": {
+      "type": "string"
+    },
+    "detected_category": {
+      "type": "string"
+    },
+    "detected_service": {
+      "type": "string"
+    },
+    "competitor_mentions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ai_summary": {
+      "type": "string"
+    },
+    "draft_response": {
+      "type": "string"
+    },
+    "edited_response": {
+      "type": "string"
+    },
+    "internal_notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "reviewed",
+        "posted",
+        "ignored"
+      ],
+      "default": "new"
+    },
+    "handled_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "reddit_item_id"
+  ]
+}
