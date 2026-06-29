@@ -131,7 +131,7 @@ const ScraperHtmlProvider = {
   },
 
   async searchByKeyword(keyword) {
-    const url = `https://old.reddit.com/search?q=${encodeURIComponent(keyword)}&sort=new&t=month`;
+    const url = `https://old.reddit.com/search?q=${encodeURIComponent(keyword)}&sort=new&t=week`;
     const html = await this._fetchHtml(url);
     return this._parseSearchPage(html);
   },
@@ -242,9 +242,19 @@ function getRedditProvider() {
 }
 
 // ─── Shared Transform: raw Reddit post → app RedditItem ───
+// Only collect posts from the last 7 days
+const MAX_AGE_DAYS = 7;
+const MAX_AGE_MS = MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+
 function buildRedditItem(post) {
   const id = post?.id || post?.name;
   if (!id || !post?.subreddit) return null;
+
+  // Skip posts older than the max age
+  if (post?.created_utc) {
+    const postTime = post.created_utc * 1000;
+    if (Date.now() - postTime > MAX_AGE_MS) return null;
+  }
 
   const isComment = post?.name?.startsWith('t1_') || !post?.title;
   const permalink = post?.permalink ? `https://www.reddit.com${post.permalink}` : '';
@@ -261,7 +271,7 @@ function buildRedditItem(post) {
     permalink: permalink,
     score: post?.score || 0,
     num_comments: post?.num_comments || 0,
-    reddit_created_at: post?.created_utc ? new Date(post.created_utc * 1000).toISOString() : null,
+    reddit_created_at: post?.created_utc ? new Date(post.created_utc * 1000).toISOString() : new Date().toISOString(),
     processed: false,
   };
 }

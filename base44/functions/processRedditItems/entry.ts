@@ -35,11 +35,16 @@ function buildPrompt(item, clients) {
     ? `Title: ${item.title}\n\nBody: ${item.body || '(no body)'}`
     : `Body: ${item.body || '(no body)'}`;
 
+  const postDate = item.reddit_created_at
+    ? new Date(item.reddit_created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'unknown';
+
   return `You are a lead intelligence analyst for a marketing agency. Analyze this Reddit ${item.type} and determine if it's a potential lead for any of our clients.
 
 REDDIT POST/COMMENT:
 Subreddit: r/${item.subreddit}
 Author: u/${item.author}
+Posted: ${postDate}
 ${content}
 
 OUR CLIENT ROSTER:
@@ -47,32 +52,36 @@ ${JSON.stringify(clientRoster, null, 2)}
 
 CRITICAL INSTRUCTIONS:
 
-1. SEMANTIC MATCHING — Do NOT rely on exact keyword matches. Understand the MEANING and INTENT of the post. These should all be identified as relevant even without exact keywords:
-   - "Someone hit my car yesterday" → car accident / personal injury
-   - "Insurance won't help after my wreck" → insurance claim / personal injury
-   - "My neck has been hurting since I got rear-ended" → personal injury / chiropractor
-   - "Tooth has been killing me all week" → dental emergency
-   - "My back went out after that fall" → chiropractor / personal injury
+1. DOMAIN ACCURACY — You must understand the ACTUAL practice area of each client and only match posts that genuinely fit. These are DIFFERENT fields and must NOT be conflated:
+   - Personal Injury: injuries caused by someone else's negligence (car accidents, slip & fall, dog bites, medical malpractice)
+   - Workers' Compensation: injuries that happen ON THE JOB — this is a SEPARATE practice area from personal injury
+   - Criminal Defense: someone charged with a crime
+   - Family Law: divorce, custody, adoption
+   - Bankruptcy: debt relief, Chapter 7/13
+   - A post about workplace injury or RIF/severance does NOT match a personal injury client unless that client explicitly lists workers' compensation as a service.
+   - When in doubt about whether a topic fits a client's practice area, DO NOT MATCH.
 
-2. LEAD DETERMINATION — is_lead should be true ONLY if the person is expressing a personal need for help, advice, or services. Not news articles, not general discussions, not jokes. High intent = actively seeking a lawyer/dentist/chiropractor, describing an accident/injury/pain, asking about insurance/settlements, or asking for recommendations in the service area.
+2. LEAD DETERMINATION — is_lead should be true ONLY if the person is expressing a PERSONAL need for help, advice, or services — about their OWN situation. NOT news articles, NOT political discussion, NOT general discussion of a topic, NOT hypothetical scenarios. Ask yourself: is this person describing something that happened TO THEM and looking for help?
 
 3. INTENT SCORING (0-100):
-   - 80-100: Direct request for help, specific injury/accident described, location matches a client
-   - 50-79: Discusses relevant situation but not actively seeking help yet
-   - 0-49: Tangential mention, news, general discussion without personal need
+   - 80-100: Direct personal request for help, specific injury/accident/need described, location matches a client
+   - 50-79: Discusses a relevant personal situation but not actively seeking help yet
+   - 0-49: News, politics, general discussion, hypothetical, or no personal need
+   - If the post is about a news event, government policy, or political topic (e.g., DOGE cuts, federal layoffs), score 0-20 — these are NOT leads.
 
-4. CLIENT MATCHING — Match the post to the BEST single client based on:
-   - Location overlap (does the detected location match the client's service area?)
-   - Semantic topic match (does the post's meaning relate to the client's services?)
-   - Keyword relevance (are any of the client's keywords semantically relevant?)
-   Only match if BOTH location AND topic align. If no client is a good fit, leave matched_client_id empty.
+4. CLIENT MATCHING — Match the post to the BEST single client based on ALL THREE:
+   - Location overlap: the detected location must fall within the client's service area. If NO location is detected and the client serves specific cities, do NOT match.
+   - Practice area match: the post's topic must fit the client's ACTUAL category and services (see domain rules above).
+   - Personal need: the poster must be describing their own situation, not discussing a topic in general.
+   If ANY of these three fail, leave matched_client_id EMPTY. A non-match is better than a wrong match.
 
-5. MATCH REASONING — In match_reasoning, provide a clear bullet-point explanation of WHY you recommended this client. Format as a newline-separated list of reasons, e.g.:
-   "• Detected location: Charlotte, NC — matches client's service area
-   • Topic: Car accident — matches client's personal injury practice
-   • High legal intent: poster is asking about insurance settlement
-   • Matches client keywords: car accident, settlement
-   • No better client match found"
+5. MATCH REASONING — In match_reasoning, give a FACTUALLY ACCURATE explanation of WHY this client was matched. Every bullet must be true and specific to THIS post — do not use generic template language. Format as newline-separated bullets:
+   "• Location: <city, state> falls within <client name>'s service area
+   • Practice area: <specific topic from post> matches client's <specific service or category>
+   • Intent: <one concrete sentence quoting or paraphrasing what the poster said that shows they need help>
+   • Keywords matched: <list which of the client's keywords are relevant>"
+   If location was NOT detected, say "• Location: none detected — cannot confirm service area match" and do NOT match the client.
+   Never invent connections or stretch a topic to fit. If the reasoning feels forced, the match is wrong.
 
 6. DRAFT RESPONSE — Write a helpful, natural reply tailored to the matched client's response tone. Sound like a real person genuinely helping — not salesy or spammy. Offer useful advice and mention the client's services only if relevant and natural. 3-5 sentences max.
 
