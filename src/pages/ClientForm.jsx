@@ -13,7 +13,7 @@ export default function ClientForm() {
 
   const [form, setForm] = useState({
     name: '', category: '', website: '', locations: [], services: [], keywords: [],
-    subreddits: [], competitors: [], response_tone: '', notes: '', is_active: true,
+    subreddits: [], response_tone: '', notes: '', is_active: true,
   });
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -65,7 +65,6 @@ export default function ClientForm() {
         subreddits: data.subreddits || prev.subreddits,
         locations: data.locations || prev.locations,
         services: data.services || prev.services,
-        competitors: data.competitors || prev.competitors,
         response_tone: data.response_tone || prev.response_tone,
       }));
     } catch (e) {
@@ -170,10 +169,6 @@ export default function ClientForm() {
         <div>
           <label className={labelCls}>Relevant Subreddits</label>
           <TagInput values={form.subreddits || []} onChange={v => update('subreddits', v)} placeholder="Charlotte — press Enter to add" />
-        </div>
-        <div>
-          <label className={labelCls}>Competitors</label>
-          <TagInput values={form.competitors || []} onChange={v => update('competitors', v)} placeholder="Competitor name — press Enter to add" />
         </div>
         <div>
           <label className={labelCls}>Preferred Response Tone</label>
