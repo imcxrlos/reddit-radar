@@ -1,10 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Copy, Save, Check, AlertCircle, FileText, Sparkles } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Copy, Save, Check, AlertCircle, FileText, Sparkles, MapPin } from 'lucide-react';
 import moment from 'moment';
 import { base44 } from '@/api/base44Client';
 import IntentBadge from '@/components/IntentBadge';
 import StatusBadge from '@/components/StatusBadge';
+
+function timeAgo(date) {
+  const m = moment(date);
+  const diffMin = moment().diff(m, 'minutes');
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${diffMin}m`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 30) return `${diffDay}d`;
+  return m.format('MMM D');
+}
 
 export default function OpportunityDetail() {
   const { id } = useParams();
@@ -139,14 +151,19 @@ export default function OpportunityDetail() {
         <div className="lg:col-span-2 space-y-5">
           {/* Reddit Post */}
           <div className="card-premium p-6">
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <span className="text-accent font-semibold text-sm">r/{opp.subreddit}</span>
-              <span className="text-muted-foreground/30">•</span>
-              <span className="text-sm text-muted-foreground">u/{opp.author}</span>
-              <span className="text-muted-foreground/30">•</span>
-              <span className="text-sm text-muted-foreground">{moment(opp.created_date).format('MMM D, YYYY')}</span>
-            </div>
             <h2 className="text-lg font-semibold text-foreground mb-3 tracking-tight">{opp.reddit_title}</h2>
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              {opp.subreddit && (
+                <span className="inline-flex items-center px-2 py-0.5 bg-secondary text-secondary-foreground rounded-md text-xs font-medium">r/{opp.subreddit}</span>
+              )}
+              {opp.detected_location && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-secondary text-secondary-foreground rounded-md text-xs font-medium">
+                  <MapPin className="w-3 h-3" /> {opp.detected_location}
+                </span>
+              )}
+              <span className="text-xs text-muted-foreground">u/{opp.author}</span>
+              <span className="text-xs text-muted-foreground">{timeAgo(opp.created_date)}</span>
+            </div>
             {opp.reddit_body && <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{opp.reddit_body}</p>}
             {opp.reddit_url && (
               <a href={opp.reddit_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 mt-4 text-sm text-accent hover:underline">
