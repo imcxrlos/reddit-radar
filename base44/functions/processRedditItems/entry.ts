@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
           oppCreatedCount++;
         }
 
-        await base44.asServiceRole.entities.RedditItem.update(item.id, { processed: true });
+        await base44.asServiceRole.entities.RedditItem.update(item.id, { processed: true, processed_at: new Date().toISOString() });
         processedCount++;
       } catch (e) {
         console.error(`Failed to process item ${item.id}:`, e.message);

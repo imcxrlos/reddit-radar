@@ -45,6 +45,11 @@
     "processed": {
       "type": "boolean",
       "default": false
+    },
+    "processed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when AI processing completed \u2014 used for retention cleanup"
     }
   },
   "required": [
