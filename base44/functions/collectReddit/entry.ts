@@ -48,6 +48,44 @@ const PublicJsonProvider = {
   },
 };
 
+// ─── ProxyJsonProvider (ScraperAPI — routes through residential IPs) ───
+const ProxyJsonProvider = {
+  name: 'scraperapi_proxy',
+
+  async _fetch(targetUrl) {
+    const apiKey = Deno.env.get("SCRAPER_API_KEY");
+    if (!apiKey) throw new Error("SCRAPER_API_KEY not set");
+
+    const proxyUrl = `https://api.scraperapi.com/?api_key=${apiKey}&url=${encodeURIComponent(targetUrl)}&country_code=us&premium=true`;
+    const resp = await fetch(proxyUrl);
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`ScraperAPI ${resp.status}: ${text.substring(0, 200)}`);
+    }
+    return resp.json();
+  },
+
+  async searchByKeyword(keyword) {
+    const url = `https://www.reddit.com/search.json?q=${encodeURIComponent(keyword)}&sort=new&limit=25&type=link`;
+    const data = await this._fetch(url);
+    return (data?.data?.children || []).map(c => c?.data).filter(Boolean);
+  },
+
+  async getSubredditNew(subreddit) {
+    const clean = subreddit.replace(/^r\//, '').trim();
+    const url = `https://www.reddit.com/r/${clean}/new.json?limit=25`;
+    const data = await this._fetch(url);
+    return (data?.data?.children || []).map(c => c?.data).filter(Boolean);
+  },
+
+  async getSubredditComments(subreddit) {
+    const clean = subreddit.replace(/^r\//, '').trim();
+    const url = `https://www.reddit.com/r/${clean}/comments.json?limit=25`;
+    const data = await this._fetch(url);
+    return (data?.data?.children || []).map(c => c?.data).filter(Boolean);
+  },
+};
+
 // ─── OfficialApiProvider (OAuth, future — activates when credentials are set) ───
 let tokenCache = { token: null, expires: 0 };
 
@@ -133,6 +171,9 @@ function getRedditProvider() {
   const clientSecret = Deno.env.get("REDDIT_CLIENT_SECRET");
   if (clientId && clientSecret) {
     return OfficialApiProvider;
+  }
+  if (Deno.env.get("SCRAPER_API_KEY")) {
+    return ProxyJsonProvider;
   }
   return PublicJsonProvider;
 }
