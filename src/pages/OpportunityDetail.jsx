@@ -17,16 +17,21 @@ export default function OpportunityDetail() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [reviewer, setReviewer] = useState('');
 
   useEffect(() => { load(); }, [id]);
 
   const load = async () => {
     try {
-      const data = await base44.entities.Opportunity.get(id);
+      const [data, user] = await Promise.all([
+        base44.entities.Opportunity.get(id),
+        base44.auth.me(),
+      ]);
       setOpp(data);
       setDraft(data.edited_response || data.draft_response || '');
       setNotes(data.internal_notes || '');
       setStatus(data.status || 'new');
+      setReviewer(user?.full_name || user?.email || 'unknown');
     } catch (e) {
       setError(e.message);
     } finally {
@@ -43,6 +48,43 @@ export default function OpportunityDetail() {
         internal_notes: notes,
         status,
       });
+
+      // Track human feedback for future AI improvements
+      const feedbackRecords = [];
+      const originalAiDraft = opp.draft_response || '';
+
+      // Draft edited before posting
+      if (draft && originalAiDraft && draft.trim() !== originalAiDraft.trim()) {
+        feedbackRecords.push({
+          opportunity_id: id,
+          reddit_item_id: opp.reddit_item_id,
+          feedback_type: 'draft_edited',
+          ai_draft_response: originalAiDraft,
+          human_edited_response: draft,
+          reviewer,
+        });
+      }
+
+      // AI marked high intent but reviewer ignored it
+      if (status === 'ignored' && (opp.intent_score || 0) >= 80) {
+        feedbackRecords.push({
+          opportunity_id: id,
+          reddit_item_id: opp.reddit_item_id,
+          feedback_type: 'intent_disagreement',
+          ai_intent_score: opp.intent_score,
+          details: `AI scored ${opp.intent_score} intent but reviewer ignored`,
+          reviewer,
+        });
+      }
+
+      if (feedbackRecords.length > 0) {
+        try {
+          await base44.entities.FeedbackRecord.bulkCreate(feedbackRecords);
+        } catch (e) {
+          console.error('Feedback tracking failed:', e.message);
+        }
+      }
+
       setOpp(prev => ({ ...prev, edited_response: draft, internal_notes: notes, status }));
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);

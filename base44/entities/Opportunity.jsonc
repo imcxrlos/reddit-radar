@@ -20,6 +20,14 @@
     "reddit_body": {
       "type": "string"
     },
+    "reddit_score": {
+      "type": "number",
+      "default": 0
+    },
+    "reddit_num_comments": {
+      "type": "number",
+      "default": 0
+    },
     "subreddit": {
       "type": "string"
     },

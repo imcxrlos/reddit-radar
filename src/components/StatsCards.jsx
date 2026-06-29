@@ -1,23 +1,19 @@
-import { TrendingUp, CalendarDays, Target, ListChecks } from 'lucide-react';
+import { Flame, Target, Eye, Send } from 'lucide-react';
 
 export default function StatsCards({ opportunities }) {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const weekAgo = new Date(todayStart);
-  weekAgo.setDate(weekAgo.getDate() - 7);
 
-  const todayCount = opportunities.filter(o => new Date(o.created_date) >= todayStart).length;
-  const weekCount = opportunities.filter(o => new Date(o.created_date) >= weekAgo).length;
-  const newOpps = opportunities.filter(o => o.status === 'new');
-  const avgIntent = newOpps.length > 0
-    ? Math.round(newOpps.reduce((s, o) => s + (o.intent_score || 0), 0) / newOpps.length)
-    : 0;
+  const newOpps = opportunities.filter(o => o.status === 'new').length;
+  const highIntent = opportunities.filter(o => (o.intent_score || 0) >= 80).length;
+  const needsReview = opportunities.filter(o => o.status === 'reviewed').length;
+  const postedToday = opportunities.filter(o => o.status === 'posted' && new Date(o.updated_date) >= todayStart).length;
 
   const cards = [
-    { label: 'New Today', value: todayCount, icon: CalendarDays, accent: 'text-blue-500', bg: 'bg-blue-50' },
-    { label: 'This Week', value: weekCount, icon: TrendingUp, accent: 'text-emerald-500', bg: 'bg-emerald-50' },
-    { label: 'Avg Intent', value: avgIntent, icon: Target, accent: 'text-orange-500', bg: 'bg-orange-50' },
-    { label: 'Total Leads', value: opportunities.length, icon: ListChecks, accent: 'text-violet-500', bg: 'bg-violet-50' },
+    { label: 'New Opportunities', value: newOpps, icon: Target, accent: 'text-blue-500', bg: 'bg-blue-50' },
+    { label: 'High Intent (80+)', value: highIntent, icon: Flame, accent: 'text-orange-500', bg: 'bg-orange-50' },
+    { label: 'Needs Review', value: needsReview, icon: Eye, accent: 'text-violet-500', bg: 'bg-violet-50' },
+    { label: 'Posted Today', value: postedToday, icon: Send, accent: 'text-emerald-500', bg: 'bg-emerald-50' },
   ];
 
   return (

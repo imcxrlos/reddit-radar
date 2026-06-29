@@ -100,8 +100,16 @@ Deno.serve(async (req) => {
     const clients = await base44.asServiceRole.entities.Client.filter({ is_active: true });
     const clientMap = new Map(clients.map(c => [c.id, c]));
 
+    // Pre-fetch existing opportunities for these Reddit items to prevent duplicates
+    const redditItemIds = unprocessed.map(i => i.id);
+    const existingOpps = await base44.asServiceRole.entities.Opportunity.filter({
+      reddit_item_id: { $in: redditItemIds }
+    });
+    const oppByItemId = new Map(existingOpps.map(o => [o.reddit_item_id, o]));
+
     let processedCount = 0;
-    let oppCount = 0;
+    let oppCreatedCount = 0;
+    let oppUpdatedCount = 0;
 
     for (const item of unprocessed) {
       try {
@@ -114,8 +122,18 @@ Deno.serve(async (req) => {
         const isLead = analysis.is_lead !== false;
         const matchedClientId = analysis.matched_client_id || '';
         const matchedClient = matchedClientId ? clientMap.get(matchedClientId) : null;
+        const existingOpp = oppByItemId.get(item.id);
 
-        if (isLead && matchedClient) {
+        const engagementData = {
+          reddit_score: item.score || 0,
+          reddit_num_comments: item.num_comments || 0,
+        };
+
+        if (existingOpp) {
+          // Update existing opportunity with fresh engagement data
+          await base44.asServiceRole.entities.Opportunity.update(existingOpp.id, engagementData);
+          oppUpdatedCount++;
+        } else if (isLead && matchedClient) {
           const title = item.title || (item.body ? item.body.substring(0, 120) : 'Untitled');
           const redditUrl = item.url || (item.permalink ? `https://www.reddit.com${item.permalink}` : '');
 
@@ -139,8 +157,9 @@ Deno.serve(async (req) => {
             match_reasoning: analysis.match_reasoning || '',
             draft_response: analysis.draft_response || '',
             status: 'new',
+            ...engagementData,
           });
-          oppCount++;
+          oppCreatedCount++;
         }
 
         await base44.asServiceRole.entities.RedditItem.update(item.id, { processed: true });
@@ -151,9 +170,10 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({
-      message: `Processed ${processedCount} items, created ${oppCount} opportunities.`,
+      message: `Processed ${processedCount} items — created ${oppCreatedCount} new opportunities, updated ${oppUpdatedCount} existing.`,
       processed: processedCount,
-      opportunities_created: oppCount,
+      opportunities_created: oppCreatedCount,
+      opportunities_updated: oppUpdatedCount,
     });
   } catch (error) {
     console.error('processRedditItems error:', error);

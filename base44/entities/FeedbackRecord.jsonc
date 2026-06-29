@@ -1,0 +1,46 @@
+{
+  "name": "FeedbackRecord",
+  "type": "object",
+  "properties": {
+    "opportunity_id": {
+      "type": "string"
+    },
+    "reddit_item_id": {
+      "type": "string"
+    },
+    "feedback_type": {
+      "type": "string",
+      "enum": [
+        "client_override",
+        "intent_disagreement",
+        "draft_edited"
+      ],
+      "default": "draft_edited"
+    },
+    "ai_client_name": {
+      "type": "string"
+    },
+    "human_client_name": {
+      "type": "string"
+    },
+    "ai_intent_score": {
+      "type": "number"
+    },
+    "ai_draft_response": {
+      "type": "string"
+    },
+    "human_edited_response": {
+      "type": "string"
+    },
+    "details": {
+      "type": "string"
+    },
+    "reviewer": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "opportunity_id",
+    "feedback_type"
+  ]
+}

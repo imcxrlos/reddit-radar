@@ -84,6 +84,8 @@ function buildRedditItem(post) {
     subreddit: post.subreddit,
     url: url,
     permalink: permalink,
+    score: post?.score || 0,
+    num_comments: post?.num_comments || 0,
     reddit_created_at: post?.created_utc ? new Date(post.created_utc * 1000).toISOString() : null,
     processed: false,
   };
@@ -145,25 +147,44 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Deduplicate against existing records
     if (collected.length === 0) {
       return Response.json({ message: 'No new Reddit items found this cycle.', collected: 0 });
     }
 
+    // Check which Reddit items already exist
     const redditIds = collected.map(c => c.reddit_id);
     const existing = await base44.asServiceRole.entities.RedditItem.filter({
       reddit_id: { $in: redditIds }
     });
-    const existingIds = new Set(existing.map(e => e.reddit_id));
-    const newItems = collected.filter(c => !existingIds.has(c.reddit_id));
+    const existingByRedditId = new Map(existing.map(e => [e.reddit_id, e]));
 
-    if (newItems.length === 0) {
-      return Response.json({ message: 'All collected items already exist.', collected: 0, duplicates: collected.length });
+    // Update engagement data on existing items; collect new ones
+    const toUpdate = [];
+    const toCreate = [];
+
+    for (const item of collected) {
+      const existingItem = existingByRedditId.get(item.reddit_id);
+      if (existingItem) {
+        toUpdate.push({
+          id: existingItem.id,
+          score: item.score,
+          num_comments: item.num_comments,
+        });
+      } else {
+        toCreate.push(item);
+      }
     }
 
-    // Bulk create new items (limit to 100 per cycle to control volume)
-    const toCreate = newItems.slice(0, 100);
-    await base44.asServiceRole.entities.RedditItem.bulkCreate(toCreate);
+    // Update existing items with fresh engagement data
+    if (toUpdate.length > 0) {
+      await base44.asServiceRole.entities.RedditItem.bulkUpdate(toUpdate);
+    }
+
+    // Create new items (limit to 100 per cycle)
+    const newToCreate = toCreate.slice(0, 100);
+    if (newToCreate.length > 0) {
+      await base44.asServiceRole.entities.RedditItem.bulkCreate(newToCreate);
+    }
 
     // Trigger AI processing of unprocessed items
     try {
@@ -173,9 +194,9 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({
-      message: `Collected ${toCreate.length} new items (${newItems.length - toCreate.length} skipped) from ${keywords.length} keywords and ${subreddits.length} subreddits.`,
-      collected: toCreate.length,
-      skipped: newItems.length - toCreate.length,
+      message: `Collected ${newToCreate.length} new items, refreshed ${toUpdate.length} existing items from ${keywords.length} keywords and ${subreddits.length} subreddits.`,
+      collected: newToCreate.length,
+      refreshed: toUpdate.length,
     });
   } catch (error) {
     console.error('collectReddit error:', error);
