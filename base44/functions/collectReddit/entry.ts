@@ -14,75 +14,138 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const USER_AGENT = Deno.env.get("REDDIT_USER_AGENT") || "LeadRadar/1.0";
 
-// ─── PublicJsonProvider (temporary, no auth required) ───
-const PublicJsonProvider = {
-  name: 'public_json',
+// ─── PublicJsonProvider removed (Reddit blocks all datacenter .json access) ───
 
-  async _fetch(url) {
-    const resp = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
-    if (!resp.ok) {
-      const text = await resp.text();
-      throw new Error(`Public JSON ${url} returned ${resp.status}: ${text.substring(0, 200)}`);
-    }
-    return resp.json();
-  },
+// ─── ScraperHtmlProvider (ScraperAPI — fetches old.reddit.com HTML pages) ───
+// ScraperAPI can access Reddit HTML pages (not .json endpoints, which Reddit blocks).
+// We scrape old.reddit.com (simpler HTML) and parse post data from the thing divs.
+const ScraperHtmlProvider = {
+  name: 'scraperapi_html',
 
-  async searchByKeyword(keyword) {
-    const url = `https://www.reddit.com/search.json?q=${encodeURIComponent(keyword)}&sort=new&limit=25&type=link`;
-    const data = await this._fetch(url);
-    return (data?.data?.children || []).map(c => c?.data).filter(Boolean);
-  },
-
-  async getSubredditNew(subreddit) {
-    const clean = subreddit.replace(/^r\//, '').trim();
-    const url = `https://www.reddit.com/r/${clean}/new.json?limit=25`;
-    const data = await this._fetch(url);
-    return (data?.data?.children || []).map(c => c?.data).filter(Boolean);
-  },
-
-  async getSubredditComments(subreddit) {
-    const clean = subreddit.replace(/^r\//, '').trim();
-    const url = `https://www.reddit.com/r/${clean}/comments.json?limit=25`;
-    const data = await this._fetch(url);
-    return (data?.data?.children || []).map(c => c?.data).filter(Boolean);
-  },
-};
-
-// ─── ProxyJsonProvider (ScraperAPI — routes through residential IPs) ───
-const ProxyJsonProvider = {
-  name: 'scraperapi_proxy',
-
-  async _fetch(targetUrl) {
+  async _fetchHtml(targetUrl) {
     const apiKey = Deno.env.get("SCRAPER_API_KEY");
     if (!apiKey) throw new Error("SCRAPER_API_KEY not set");
 
-    const proxyUrl = `https://api.scraperapi.com/?api_key=${apiKey}&url=${encodeURIComponent(targetUrl)}&country_code=us&premium=true`;
+    const proxyUrl = `https://api.scraperapi.com/?api_key=${apiKey}&url=${encodeURIComponent(targetUrl)}`;
     const resp = await fetch(proxyUrl);
     if (!resp.ok) {
       const text = await resp.text();
       throw new Error(`ScraperAPI ${resp.status}: ${text.substring(0, 200)}`);
     }
-    return resp.json();
+    return resp.text();
+  },
+
+  _cleanText(text) {
+    return text.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ').trim();
+  },
+
+  _parseNewPage(html) {
+    // Subreddit /new/ uses "thing" divs with data attributes
+    const posts = [];
+    const thingRegex = /<div[^>]*class="[^"]*thing[^"]*"[^>]*data-fullname="(t[13]_\w+)"/g;
+    let match;
+    while ((match = thingRegex.exec(html)) !== null) {
+      const fullname = match[1];
+      const block = html.substring(match.index, match.index + 8000);
+      const redditId = fullname.replace(/^t[13]_/, '');
+      const isComment = fullname.startsWith('t1_');
+      const author = block.match(/data-author="([^"]*)"/)?.[1] || '[deleted]';
+      const subreddit = block.match(/data-subreddit="([^"]*)"/)?.[1] || '';
+      const score = parseInt(block.match(/data-score="([^"]*)"/)?.[1] || '0');
+      const numComments = parseInt(block.match(/data-comments-count="([^"]*)"/)?.[1] || '0');
+      const dataUrl = block.match(/data-url="([^"]*)"/)?.[1] || '';
+      const timestamp = block.match(/data-timestamp="([^"]*)"/)?.[1];
+      let title = block.match(/class="title[^"]*"[^>]*>([\s\S]*?)<\/a>/)?.[1] || '';
+      title = this._cleanText(title);
+      const selftext = block.match(/<div class="md">([\s\S]*?)<\/div>/)?.[1] || '';
+      const body = this._cleanText(selftext);
+      if (!subreddit) continue;
+      const permalink = dataUrl.startsWith('/') ? dataUrl : '';
+      posts.push({
+        name: fullname, id: redditId,
+        title: title || (body ? body.substring(0, 100) : ''),
+        body: isComment ? body : '', selftext: isComment ? '' : body,
+        author, subreddit,
+        permalink, url: permalink ? `https://www.reddit.com${permalink}` : dataUrl,
+        score, num_comments: numComments,
+        created_utc: timestamp ? parseInt(timestamp) / 1000 : null,
+      });
+    }
+    return posts;
+  },
+
+  _parseSearchPage(html) {
+    // Search results use "search-result" divs with different sub-elements
+    const posts = [];
+    const searchRegex = /<div[^>]*class="[^"]*search-result[^"]*"[^>]*data-fullname="(t[13]_\w+)"/g;
+    let match;
+    while ((match = searchRegex.exec(html)) !== null) {
+      const fullname = match[1];
+      const block = html.substring(match.index, match.index + 8000);
+      const redditId = fullname.replace(/^t[13]_/, '');
+      const isComment = fullname.startsWith('t1_');
+
+      // Title from search-title link
+      let title = block.match(/class="search-title[^"]*"[^>]*>([\s\S]*?)<\/a>/)?.[1] || '';
+      title = this._cleanText(title);
+
+      // Score from search-score span
+      const scoreText = block.match(/class="search-score"[^>]*>(.*?)<\/span>/)?.[1] || '0';
+      const score = parseInt(scoreText.replace(/[^0-9]/g, '')) || 0;
+
+      // Comments from search-comments link
+      const commentsText = block.match(/class="search-comments[^"]*"[^>]*>(.*?)<\/a>/)?.[1] || '0';
+      const numComments = parseInt(commentsText.replace(/[^0-9]/g, '')) || 0;
+
+      // Author
+      const author = this._cleanText(block.match(/class="author[^"]*"[^>]*>(.*?)<\/a>/)?.[1] || '[deleted]');
+
+      // Subreddit from search-subreddit-link
+      const subreddit = block.match(/class="search-subreddit-link[^"]*"[^>]*>r\/(.*?)<\/a>/)?.[1]?.trim() || '';
+
+      // Permalink from search-title href
+      const permalink = block.match(/class="search-title[^"]*"[^>]*href="([^"]*)"/)?.[1] || '';
+      const cleanPermalink = permalink.includes('old.reddit.com') ? permalink.replace(/https?:\/\/old\.reddit\.com/, '') : permalink;
+
+      // Time from time element
+      const datetime = block.match(/<time[^>]*datetime="([^"]*)"/)?.[1] || '';
+      const createdUtc = datetime ? new Date(datetime).getTime() / 1000 : null;
+
+      // Body from div.md
+      const selftext = block.match(/<div class="md">([\s\S]*?)<\/div>/)?.[1] || '';
+      const body = this._cleanText(selftext);
+
+      if (!subreddit) continue;
+
+      posts.push({
+        name: fullname, id: redditId,
+        title: title || (body ? body.substring(0, 100) : ''),
+        body: isComment ? body : '', selftext: isComment ? '' : body,
+        author, subreddit,
+        permalink: cleanPermalink, url: permalink,
+        score, num_comments: numComments,
+        created_utc: createdUtc,
+      });
+    }
+    return posts;
   },
 
   async searchByKeyword(keyword) {
-    const url = `https://www.reddit.com/search.json?q=${encodeURIComponent(keyword)}&sort=new&limit=25&type=link`;
-    const data = await this._fetch(url);
-    return (data?.data?.children || []).map(c => c?.data).filter(Boolean);
+    const url = `https://old.reddit.com/search?q=${encodeURIComponent(keyword)}&sort=new&t=month`;
+    const html = await this._fetchHtml(url);
+    return this._parseSearchPage(html);
   },
 
   async getSubredditNew(subreddit) {
     const clean = subreddit.replace(/^r\//, '').trim();
-    const url = `https://www.reddit.com/r/${clean}/new.json?limit=25`;
-    const data = await this._fetch(url);
-    return (data?.data?.children || []).map(c => c?.data).filter(Boolean);
+    const url = `https://old.reddit.com/r/${clean}/new/`;
+    const html = await this._fetchHtml(url);
+    return this._parseNewPage(html);
   },
 
   async getSubredditComments(subreddit) {
-    const clean = subreddit.replace(/^r\//, '').trim();
-    const url = `https://www.reddit.com/r/${clean}/comments.json?limit=25`;
-    const data = await this._fetch(url);
-    return (data?.data?.children || []).map(c => c?.data).filter(Boolean);
+    // old.reddit.com has no comments listing page — return empty (posts are enough for lead gen)
+    return [];
   },
 };
 
@@ -173,9 +236,9 @@ function getRedditProvider() {
     return OfficialApiProvider;
   }
   if (Deno.env.get("SCRAPER_API_KEY")) {
-    return ProxyJsonProvider;
+    return ScraperHtmlProvider;
   }
-  return PublicJsonProvider;
+  return ScraperHtmlProvider;
 }
 
 // ─── Shared Transform: raw Reddit post → app RedditItem ───
