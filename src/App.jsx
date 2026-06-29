@@ -9,7 +9,6 @@ import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
-import Clients from './pages/Clients';
 import ClientForm from './pages/ClientForm';
 import OpportunityDetail from './pages/OpportunityDetail';
 
@@ -42,7 +41,6 @@ const AuthenticatedApp = () => {
       {/* Add your page Route elements here */}
       <Route element={<Layout />}>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/clients" element={<Clients />} />
         <Route path="/clients/new" element={<ClientForm />} />
         <Route path="/clients/:id/edit" element={<ClientForm />} />
         <Route path="/opportunity/:id" element={<OpportunityDetail />} />

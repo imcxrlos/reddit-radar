@@ -1,8 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
+import { Radar } from 'lucide-react';
 import StatsCards from '@/components/StatsCards';
 import FilterBar from '@/components/FilterBar';
 import OpportunityTable from '@/components/OpportunityTable';
+import QuickFilters from '@/components/QuickFilters';
+import SourceAnalytics from '@/components/SourceAnalytics';
+import ClientAnalytics from '@/components/ClientAnalytics';
+import ClientList from '@/components/ClientList';
 
 const emptyFilters = {
   search: '', client: '', status: '', category: '', subreddit: '', location: '', state: '',
@@ -10,11 +15,13 @@ const emptyFilters = {
 };
 
 export default function Dashboard() {
+  const [tab, setTab] = useState('opportunities');
   const [opportunities, setOpportunities] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState(emptyFilters);
+  const [activeQuickFilters, setActiveQuickFilters] = useState([]);
 
   useEffect(() => { loadData(); }, []);
 
@@ -38,6 +45,12 @@ export default function Dashboard() {
   const locations = useMemo(() => [...new Set(opportunities.map(o => o.detected_location).filter(Boolean))].sort(), [opportunities]);
   const states = useMemo(() => [...new Set(opportunities.map(o => o.detected_state).filter(Boolean))].sort(), [opportunities]);
 
+  const toggleQuickFilter = (key) => {
+    setActiveQuickFilters(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+
   const filtered = useMemo(() => {
     return opportunities.filter(o => {
       if (filters.client && o.client_id !== filters.client) return false;
@@ -55,17 +68,33 @@ export default function Dashboard() {
         const haystack = `${o.reddit_title || ''} ${o.ai_summary || ''} ${o.reddit_body || ''}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
+      if (activeQuickFilters.includes('highIntent') && (o.intent_score || 0) < 80) return false;
+      if (activeQuickFilters.includes('hasLocation') && !o.detected_location) return false;
+      if (activeQuickFilters.includes('personalInjury')) {
+        const cat = (o.detected_category || '').toLowerCase();
+        if (!cat.includes('injury') && !cat.includes('legal') && !cat.includes('law')) return false;
+      }
+      if (activeQuickFilters.includes('dental')) {
+        const cat = (o.detected_category || '').toLowerCase();
+        if (!cat.includes('dental') && !cat.includes('dentist')) return false;
+      }
+      if (activeQuickFilters.includes('statusNew') && o.status !== 'new') return false;
+      if (activeQuickFilters.includes('needsReview') && o.status !== 'reviewed') return false;
       return true;
     }).sort((a, b) => {
-      const dc = new Date(b.created_date) - new Date(a.created_date);
-      if (dc !== 0) return dc;
-      return (b.intent_score || 0) - (a.intent_score || 0);
+      const intentDiff = (b.intent_score || 0) - (a.intent_score || 0);
+      if (intentDiff !== 0) return intentDiff;
+      const dateDiff = new Date(b.created_date) - new Date(a.created_date);
+      if (dateDiff !== 0) return dateDiff;
+      const aEngagement = (a.reddit_score || 0) + (a.reddit_num_comments || 0);
+      const bEngagement = (b.reddit_score || 0) + (b.reddit_num_comments || 0);
+      return bEngagement - aEngagement;
     });
-  }, [opportunities, filters]);
+  }, [opportunities, filters, activeQuickFilters]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="w-7 h-7 border-[2.5px] border-border border-t-accent rounded-full animate-spin"></div>
       </div>
     );
@@ -80,24 +109,69 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-[28px] font-semibold text-foreground tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">{filtered.length} opportunities found</p>
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-30 bg-[hsl(220,14%,98%)]/80 backdrop-blur border-b border-border">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
+              <Radar className="w-4 h-4 text-white" strokeWidth={2.5} />
+            </div>
+            <span className="text-[15px] font-semibold tracking-tight text-foreground">LeadRadar</span>
+          </div>
+          <div className="flex items-center gap-1 p-0.5 bg-secondary rounded-xl">
+            <button
+              onClick={() => setTab('opportunities')}
+              className={`px-4 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
+                tab === 'opportunities' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Opportunities
+            </button>
+            <button
+              onClick={() => setTab('clients')}
+              className={`px-4 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
+                tab === 'clients' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Clients
+            </button>
+          </div>
         </div>
-      </div>
-      <StatsCards opportunities={opportunities} />
-      <FilterBar
-        filters={filters}
-        setFilters={setFilters}
-        clients={clients}
-        subreddits={subreddits}
-        categories={categories}
-        locations={locations}
-        states={states}
-      />
-      <OpportunityTable opportunities={filtered} />
+      </header>
+
+      {tab === 'opportunities' ? (
+        <div className="p-6 md:p-10 max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-[28px] font-semibold text-foreground tracking-tight">Dashboard</h1>
+              <p className="text-sm text-muted-foreground mt-1">{filtered.length} opportunities · sorted by priority</p>
+            </div>
+          </div>
+          <StatsCards opportunities={opportunities} />
+          <QuickFilters activeFilters={activeQuickFilters} onToggle={toggleQuickFilter} />
+          <FilterBar
+            filters={filters}
+            setFilters={setFilters}
+            clients={clients}
+            subreddits={subreddits}
+            categories={categories}
+            locations={locations}
+            states={states}
+          />
+          <OpportunityTable opportunities={filtered} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6">
+            <SourceAnalytics opportunities={opportunities} />
+            <ClientAnalytics opportunities={opportunities} />
+          </div>
+        </div>
+      ) : (
+        <div className="p-6 md:p-10 max-w-7xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-[28px] font-semibold text-foreground tracking-tight">Clients</h1>
+          </div>
+          <ClientList clients={clients} />
+        </div>
+      )}
     </div>
   );
 }
