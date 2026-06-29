@@ -1,9 +1,21 @@
 import { Link } from 'react-router-dom';
 import moment from 'moment';
-import { ExternalLink, Copy, Eye, Check, MessageSquare, ArrowUp } from 'lucide-react';
+import { ExternalLink, Copy, Eye, Check, MessageSquare, ArrowUp, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import IntentBadge from './IntentBadge';
 import StatusBadge from './StatusBadge';
+
+function timeAgo(date) {
+  const m = moment(date);
+  const diffMin = moment().diff(m, 'minutes');
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${diffMin}m`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 30) return `${diffDay}d`;
+  return m.format('MMM D');
+}
 
 export default function OpportunityTable({ opportunities }) {
   const [copiedId, setCopiedId] = useState(null);
@@ -35,11 +47,8 @@ export default function OpportunityTable({ opportunities }) {
             <tr className="border-b border-border bg-muted/40">
               <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Intent</th>
               <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Reddit Post</th>
-              <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Subreddit</th>
-              <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Location</th>
               <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Client</th>
               <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-              <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Found</th>
               <th className="text-right px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
@@ -53,13 +62,21 @@ export default function OpportunityTable({ opportunities }) {
                     <Link to={`/opportunity/${o.id}`} className="text-foreground hover:text-accent font-medium transition-colors block truncate max-w-md">
                       {o.reddit_title || 'Untitled'}
                     </Link>
-                    {o.ai_summary && <p className="text-xs text-muted-foreground truncate max-w-md mt-0.5">{o.ai_summary}</p>}
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      {o.subreddit && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded text-[11px] font-medium">r/{o.subreddit}</span>
+                      )}
+                      {o.detected_location && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded text-[11px] font-medium">
+                          <MapPin className="w-2.5 h-2.5" /> {o.detected_location}
+                        </span>
+                      )}
+                      <span className="text-[11px] text-muted-foreground">{timeAgo(o.created_date)}</span>
+                    </div>
+                    {o.ai_summary && <p className="text-xs text-muted-foreground truncate max-w-md mt-1">{o.ai_summary}</p>}
                   </td>
-                  <td className="px-4 py-3.5 text-sm whitespace-nowrap"><span className="text-accent font-medium">r/{o.subreddit}</span></td>
-                  <td className="px-4 py-3.5 text-sm text-muted-foreground whitespace-nowrap">{o.detected_location || '—'}</td>
                   <td className="px-4 py-3.5 text-sm font-medium text-foreground whitespace-nowrap">{o.client_name || '—'}</td>
                   <td className="px-4 py-3.5"><StatusBadge status={o.status} /></td>
-                  <td className="px-4 py-3.5 text-sm text-muted-foreground whitespace-nowrap">{moment(o.created_date).format('MMM D')}</td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center justify-end gap-1">
                       <Link
