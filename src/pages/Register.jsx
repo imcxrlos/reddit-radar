@@ -22,6 +22,10 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    if (!/@everconvert\.com$/i.test(email.trim())) {
+      setError("Sign up is restricted to @everconvert.com email addresses.");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
