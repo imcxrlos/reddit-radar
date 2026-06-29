@@ -5,8 +5,6 @@ import StatsCards from '@/components/StatsCards';
 import FilterBar from '@/components/FilterBar';
 import OpportunityTable from '@/components/OpportunityTable';
 import QuickFilters from '@/components/QuickFilters';
-import SourceAnalytics from '@/components/SourceAnalytics';
-import ClientAnalytics from '@/components/ClientAnalytics';
 import ClientList from '@/components/ClientList';
 
 const emptyFilters = {
@@ -159,10 +157,6 @@ export default function Dashboard() {
             states={states}
           />
           <OpportunityTable opportunities={filtered} />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6">
-            <SourceAnalytics opportunities={opportunities} />
-            <ClientAnalytics opportunities={opportunities} />
-          </div>
         </div>
       ) : (
         <div className="p-6 md:p-10 max-w-7xl mx-auto">

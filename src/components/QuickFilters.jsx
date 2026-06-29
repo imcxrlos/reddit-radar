@@ -1,11 +1,7 @@
-import { Flame, MapPin, Scale, Stethoscope, Sparkles, Eye } from 'lucide-react';
+import { Flame, Eye } from 'lucide-react';
 
 const QUICK_FILTERS = [
   { key: 'highIntent', label: 'High Intent', icon: Flame, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200' },
-  { key: 'hasLocation', label: 'Has Location', icon: MapPin, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
-  { key: 'personalInjury', label: 'Personal Injury', icon: Scale, color: 'text-slate-700', bg: 'bg-slate-100', border: 'border-slate-200' },
-  { key: 'dental', label: 'Dental', icon: Stethoscope, color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-200' },
-  { key: 'statusNew', label: 'New', icon: Sparkles, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
   { key: 'needsReview', label: 'Needs Review', icon: Eye, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-200' },
 ];
 

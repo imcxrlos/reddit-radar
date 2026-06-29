@@ -33,15 +33,14 @@ export default function OpportunityTable({ opportunities }) {
         <table className="w-full">
           <thead>
             <tr className="border-b border-border bg-muted/40">
-              <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Intent</th>
-              <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Post</th>
-              <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Client</th>
-              <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Location</th>
-              <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Subreddit</th>
-              <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Engagement</th>
-              <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Found</th>
-              <th className="text-left px-5 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-              <th className="text-right px-5 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
+              <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Intent</th>
+              <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Reddit Post</th>
+              <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Subreddit</th>
+              <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Location</th>
+              <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Client</th>
+              <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+              <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Found</th>
+              <th className="text-right px-4 py-3.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -49,29 +48,19 @@ export default function OpportunityTable({ opportunities }) {
               const hasDraft = o.edited_response || o.draft_response;
               return (
                 <tr key={o.id} className="hover:bg-muted/30 transition-colors group">
-                  <td className="px-5 py-3.5"><IntentBadge score={o.intent_score} /></td>
-                  <td className="px-5 py-3.5 text-sm max-w-xs">
-                    <Link to={`/opportunity/${o.id}`} className="text-foreground hover:text-accent font-medium transition-colors truncate block max-w-xs">
+                  <td className="px-4 py-3.5"><IntentBadge score={o.intent_score} /></td>
+                  <td className="px-4 py-3.5 text-sm max-w-md">
+                    <Link to={`/opportunity/${o.id}`} className="text-foreground hover:text-accent font-medium transition-colors block truncate max-w-md">
                       {o.reddit_title || 'Untitled'}
                     </Link>
-                    {o.ai_summary && <p className="text-xs text-muted-foreground truncate max-w-xs mt-0.5">{o.ai_summary}</p>}
+                    {o.ai_summary && <p className="text-xs text-muted-foreground truncate max-w-md mt-0.5">{o.ai_summary}</p>}
                   </td>
-                  <td className="px-5 py-3.5 text-sm font-medium text-foreground whitespace-nowrap">{o.client_name || '—'}</td>
-                  <td className="px-5 py-3.5 text-sm text-muted-foreground whitespace-nowrap">{o.detected_location || '—'}</td>
-                  <td className="px-5 py-3.5 text-sm whitespace-nowrap"><span className="text-accent font-medium">r/{o.subreddit}</span></td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-0.5">
-                        <ArrowUp className="w-3 h-3" /> {o.reddit_score || 0}
-                      </span>
-                      <span className="flex items-center gap-0.5">
-                        <MessageSquare className="w-3 h-3" /> {o.reddit_num_comments || 0}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-sm text-muted-foreground whitespace-nowrap">{moment(o.created_date).format('MMM D')}</td>
-                  <td className="px-5 py-3.5"><StatusBadge status={o.status} /></td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-4 py-3.5 text-sm whitespace-nowrap"><span className="text-accent font-medium">r/{o.subreddit}</span></td>
+                  <td className="px-4 py-3.5 text-sm text-muted-foreground whitespace-nowrap">{o.detected_location || '—'}</td>
+                  <td className="px-4 py-3.5 text-sm font-medium text-foreground whitespace-nowrap">{o.client_name || '—'}</td>
+                  <td className="px-4 py-3.5"><StatusBadge status={o.status} /></td>
+                  <td className="px-4 py-3.5 text-sm text-muted-foreground whitespace-nowrap">{moment(o.created_date).format('MMM D')}</td>
+                  <td className="px-4 py-3.5">
                     <div className="flex items-center justify-end gap-1">
                       <Link
                         to={`/opportunity/${o.id}`}
