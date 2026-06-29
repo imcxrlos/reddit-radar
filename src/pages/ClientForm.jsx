@@ -85,7 +85,7 @@ export default function ClientForm() {
       } else {
         await base44.entities.Client.create(form);
       }
-      navigate('/clients');
+      navigate('/');
     } catch (e) {
       setError(e.message);
       setSaving(false);
@@ -106,7 +106,7 @@ export default function ClientForm() {
   return (
     <div className="p-6 md:p-10 max-w-3xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => navigate('/clients')} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-colors">
+        <button onClick={() => navigate('/')} className="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
@@ -191,7 +191,7 @@ export default function ClientForm() {
           <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">
             <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Client'}
           </button>
-          <button type="button" onClick={() => navigate('/clients')} className="btn-secondary">
+          <button type="button" onClick={() => navigate('/')} className="btn-secondary">
             Cancel
           </button>
         </div>
