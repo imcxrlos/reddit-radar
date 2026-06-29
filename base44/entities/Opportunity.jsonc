@@ -55,6 +55,9 @@
     "ai_summary": {
       "type": "string"
     },
+    "match_reasoning": {
+      "type": "string"
+    },
     "draft_response": {
       "type": "string"
     },

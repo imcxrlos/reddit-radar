@@ -149,9 +149,19 @@ export default function OpportunityDetail() {
                 </div>
               </div>
             )}
-            <div>
+            <div className="mb-4">
               <p className="text-xs text-gray-500 mb-1">Summary</p>
               <p className="text-sm text-gray-700">{opp.ai_summary || '—'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1.5">Why this client was recommended</p>
+              {opp.match_reasoning ? (
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {opp.match_reasoning}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400">No reasoning provided.</p>
+              )}
             </div>
           </div>
         </div>

@@ -11,6 +11,7 @@ const ANALYSIS_SCHEMA = {
     detected_service: { type: 'string', description: 'Specific service or topic the user needs help with' },
     matched_client_id: { type: 'string', description: 'The ID of the best matching client from the roster, or empty if none match' },
     matched_client_name: { type: 'string', description: 'Name of the matched client, or empty' },
+    match_reasoning: { type: 'string', description: 'Bullet-point reasoning explaining WHY this client was matched (location overlap, topic match, service area, keyword relevance, etc.)' },
     competitor_mentions: { type: 'array', items: { type: 'string' }, description: 'Competitor names mentioned in the post' },
     summary: { type: 'string', description: '2-3 sentence summary of what the person needs' },
     draft_response: { type: 'string', description: 'A helpful, natural, non-spammy reply the team can review and post' },
@@ -44,15 +45,36 @@ ${content}
 OUR CLIENT ROSTER:
 ${JSON.stringify(clientRoster, null, 2)}
 
-INSTRUCTIONS:
-1. Determine if this post indicates someone seeking help, advice, or services that one of our clients could provide. Set is_lead accordingly.
-2. Score intent 0-100: how urgently/clearly is the person seeking help? High scores for direct questions about lawyers/dentists/chiropractors, describing accidents/injuries/pain, asking about insurance/settlements. Low scores for general news, jokes, or discussions without personal need.
-3. Detect any city and US state mentioned in the post. If the subreddit is a local city/state subreddit, use that as context.
-4. Identify the business category and specific service needed.
-5. Match the post to the BEST single client from the roster based on location overlap, service match, and keyword relevance. If no client is a good fit, leave matched_client_id empty.
-6. Detect if any competitor names from the roster are mentioned.
-7. Write a 2-3 sentence summary.
-8. Draft a helpful, natural reply tailored to the matched client's response tone and services. It should sound like a real person genuinely helping — not spammy or salesy. Offer useful advice and mention the client's services only if relevant and natural. Keep it concise (3-5 sentences max).
+CRITICAL INSTRUCTIONS:
+
+1. SEMANTIC MATCHING — Do NOT rely on exact keyword matches. Understand the MEANING and INTENT of the post. These should all be identified as relevant even without exact keywords:
+   - "Someone hit my car yesterday" → car accident / personal injury
+   - "Insurance won't help after my wreck" → insurance claim / personal injury
+   - "My neck has been hurting since I got rear-ended" → personal injury / chiropractor
+   - "Tooth has been killing me all week" → dental emergency
+   - "My back went out after that fall" → chiropractor / personal injury
+
+2. LEAD DETERMINATION — is_lead should be true ONLY if the person is expressing a personal need for help, advice, or services. Not news articles, not general discussions, not jokes. High intent = actively seeking a lawyer/dentist/chiropractor, describing an accident/injury/pain, asking about insurance/settlements, or asking for recommendations in the service area.
+
+3. INTENT SCORING (0-100):
+   - 80-100: Direct request for help, specific injury/accident described, location matches a client
+   - 50-79: Discusses relevant situation but not actively seeking help yet
+   - 0-49: Tangential mention, news, general discussion without personal need
+
+4. CLIENT MATCHING — Match the post to the BEST single client based on:
+   - Location overlap (does the detected location match the client's service area?)
+   - Semantic topic match (does the post's meaning relate to the client's services?)
+   - Keyword relevance (are any of the client's keywords semantically relevant?)
+   Only match if BOTH location AND topic align. If no client is a good fit, leave matched_client_id empty.
+
+5. MATCH REASONING — In match_reasoning, provide a clear bullet-point explanation of WHY you recommended this client. Format as a newline-separated list of reasons, e.g.:
+   "• Detected location: Charlotte, NC — matches client's service area
+   • Topic: Car accident — matches client's personal injury practice
+   • High legal intent: poster is asking about insurance settlement
+   • Matches client keywords: car accident, settlement
+   • No better client match found"
+
+6. DRAFT RESPONSE — Write a helpful, natural reply tailored to the matched client's response tone. Sound like a real person genuinely helping — not salesy or spammy. Offer useful advice and mention the client's services only if relevant and natural. 3-5 sentences max.
 
 Return your analysis as JSON.`;
 }
@@ -93,7 +115,6 @@ Deno.serve(async (req) => {
         const matchedClientId = analysis.matched_client_id || '';
         const matchedClient = matchedClientId ? clientMap.get(matchedClientId) : null;
 
-        // Only create opportunities for leads with a matched client
         if (isLead && matchedClient) {
           const title = item.title || (item.body ? item.body.substring(0, 120) : 'Untitled');
           const redditUrl = item.url || (item.permalink ? `https://www.reddit.com${item.permalink}` : '');
@@ -115,13 +136,13 @@ Deno.serve(async (req) => {
             detected_service: analysis.detected_service || '',
             competitor_mentions: analysis.competitor_mentions || [],
             ai_summary: analysis.summary || '',
+            match_reasoning: analysis.match_reasoning || '',
             draft_response: analysis.draft_response || '',
             status: 'new',
           });
           oppCount++;
         }
 
-        // Mark item as processed regardless
         await base44.asServiceRole.entities.RedditItem.update(item.id, { processed: true });
         processedCount++;
       } catch (e) {

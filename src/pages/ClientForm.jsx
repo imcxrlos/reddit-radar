@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Sparkles, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import TagInput from '@/components/TagInput';
 
@@ -18,6 +18,10 @@ export default function ClientForm() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [aiName, setAiName] = useState('');
+  const [aiWebsite, setAiWebsite] = useState('');
+  const [aiIndustry, setAiIndustry] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -34,6 +38,42 @@ export default function ClientForm() {
   }, [id, isEdit]);
 
   const update = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  const handleAiOnboard = async () => {
+    const name = aiName.trim() || form.name;
+    const website = aiWebsite.trim() || form.website;
+    const industry = aiIndustry.trim() || form.category;
+    if (!name || !industry) {
+      setError('Please enter at least a business name and industry to use AI onboarding.');
+      return;
+    }
+    setAiLoading(true);
+    setError(null);
+    try {
+      const resp = await base44.functions.invoke('onboardClient', {
+        business_name: name,
+        website: website || '',
+        industry,
+      });
+      const data = resp.data || resp;
+      setForm(prev => ({
+        ...prev,
+        name: prev.name || name,
+        website: prev.website || website,
+        category: prev.category || data.category || industry,
+        keywords: data.keywords || prev.keywords,
+        subreddits: data.subreddits || prev.subreddits,
+        locations: data.locations || prev.locations,
+        services: data.services || prev.services,
+        competitors: data.competitors || prev.competitors,
+        response_tone: data.response_tone || prev.response_tone,
+      }));
+    } catch (e) {
+      setError(e.response?.data?.error || e.message || 'AI onboarding failed');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,6 +113,24 @@ export default function ClientForm() {
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm mb-4">{error}</div>}
+
+      {!isEdit && (
+        <div className="bg-gradient-to-br from-slate-50 to-orange-50/50 border border-orange-200 rounded-xl p-5 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-orange-500" />
+            <h3 className="text-sm font-semibold text-gray-900">AI Onboarding Assistant</h3>
+          </div>
+          <p className="text-xs text-gray-600 mb-4">Enter your business details and let AI suggest keywords, subreddits, locations, services, and competitors. You can edit everything before saving.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+            <input value={aiName} onChange={e => setAiName(e.target.value)} className={inputCls} placeholder="Business name" />
+            <input value={aiWebsite} onChange={e => setAiWebsite(e.target.value)} className={inputCls} placeholder="Website (optional)" />
+            <input value={aiIndustry} onChange={e => setAiIndustry(e.target.value)} className={inputCls} placeholder="Industry (e.g. Personal Injury)" />
+          </div>
+          <button type="button" onClick={handleAiOnboard} disabled={aiLoading} className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50">
+            {aiLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Researching...</> : <><Sparkles className="w-4 h-4" /> Generate Suggestions</>}
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
