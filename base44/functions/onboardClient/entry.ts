@@ -72,7 +72,16 @@ Provide recommendations for:
 
 1. KEYWORDS: 10-15 keywords and phrases to monitor on Reddit. These should capture how real people talk about problems related to this business — not just industry jargon. Include both direct terms ("car accident lawyer") and conversational phrases ("got rear ended", "insurance won't pay").
 
-2. EXPANDED_KEYWORDS: A flat list of 40-80 synonyms, related terms, and natural-language phrases people actually type when describing problems this business can solve. Include the KEYWORDS and SERVICES from above AND their conversational variants. For example, for a car-accident practice: "car accident", "car crash", "auto accident", "hit my car", "got rear ended", "rear-ended", "car wreck", "totaled my car", "someone crashed into me", "ran a red light", "insurance won't pay". All lowercase, no duplicates. Be generous with phrasings a real Reddit poster would write — this list powers deterministic keyword matching during monitoring, so broader coverage here means fewer missed leads.
+2. EXPANDED_KEYWORDS: A flat list of 100-150 high-recall terms and phrases that real Reddit users type when describing problems this business can solve. This list powers DETERMINISTIC substring matching during monitoring — once generated, NO AI runs in monitoring, so coverage must be generous now or leads are missed forever. For EACH service the business offers, include ALL of the following categories of phrasing:
+
+   - Synonyms: dictionary equivalents ("car accident", "auto accident", "motor vehicle accident", "car collision")
+   - Common Reddit wording: how posters actually phrase titles/posts ("got into an accident", "was in a car wreck", "car got hit", "someone crashed into my car")
+   - Slang & informal terms: "got T-boned", "got sideswiped", "totaled my car", "whiplash", "fender bender", "rear ended me", "rear ended"
+   - Misspellings & common typos people actually type: "rearended", "car accidnet", "lawer", "aturny", "compinsation"
+   - Conversational first-person phrases: "someone hit my car", "got hit at a red light", "my car got totaled", "got into a wreck", "hit by another driver", "my neck hurts after the accident", "hurt my back in a crash"
+   - Long-tail intent phrases & questions: "should I get a lawyer after a car accident", "other driver's insurance won't pay", "insurance is denying my claim", "how much is my car accident case worth", "do I need a lawyer after an accident"
+
+   Generate these for EVERY service in your SERVICES list — do not skip any. Also include the KEYWORDS and SERVICES verbatim. All lowercase, no duplicates (no entries that differ only by trailing punctuation). Err toward MORE phrases per service, not fewer. The goal is maximum recall — capture how real Reddit users naturally describe the situation, not just dictionary synonyms.
 
 3. SUBREDDITS: 8-15 relevant subreddits to monitor. Include:
    - Local city/state subreddits where the business operates (infer from website or business name)
