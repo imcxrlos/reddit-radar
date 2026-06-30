@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import { opportunities, clients } from '@/services/db';
 import { Radar } from 'lucide-react';
 import StatsCards from '@/components/StatsCards';
 import FilterBar from '@/components/FilterBar';
@@ -26,8 +26,8 @@ export default function Dashboard() {
   const loadData = async () => {
     try {
       const [opps, cls] = await Promise.all([
-        base44.entities.Opportunity.list('-created_date', 500),
-        base44.entities.Client.list(),
+        opportunities.list('-created_date', 500),
+        clients.list(),
       ]);
       setOpportunities(opps);
       setClients(cls);

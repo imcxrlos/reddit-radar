@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ThumbsUp, ThumbsDown, Check, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { feedback } from '@/services/db';
 
 const REASONS = [
   { value: 'wrong_client', label: 'Wrong client' },
@@ -24,7 +24,7 @@ export default function MatchFeedback({ opp, reviewer }) {
     let active = true;
     (async () => {
       try {
-        const existing = await base44.entities.FeedbackRecord.filter({
+        const existing = await feedback.filter({
           opportunity_id: opp.id,
           feedback_type: 'match_feedback',
           reviewer,
@@ -46,7 +46,7 @@ export default function MatchFeedback({ opp, reviewer }) {
   const submit = async (dec, reasonVal = '', noteVal = '') => {
     setSubmitting(true);
     try {
-      await base44.entities.FeedbackRecord.create({
+      await feedback.create({
         opportunity_id: opp.id,
         reddit_item_id: opp.reddit_item_id,
         feedback_type: 'match_feedback',

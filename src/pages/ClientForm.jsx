@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Sparkles, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { clients } from '@/services/db';
+import { ai } from '@/services/ai';
 import TagInput from '@/components/TagInput';
 
 const categoryOptions = ['Personal Injury', 'Dental', 'Chiropractor', 'Medical', 'Legal', 'Real Estate', 'Home Services', 'Other'];
@@ -27,7 +28,7 @@ export default function ClientForm() {
     if (!isEdit) return;
     (async () => {
       try {
-        const client = await base44.entities.Client.get(id);
+        const client = await clients.get(id);
         setForm(client);
       } catch (e) {
         setError(e.message);
@@ -50,12 +51,11 @@ export default function ClientForm() {
     setAiLoading(true);
     setError(null);
     try {
-      const resp = await base44.functions.invoke('onboardClient', {
+      const data = await ai.onboardClient({
         business_name: name,
         website: website || '',
         industry,
       });
-      const data = resp.data || resp;
       setForm(prev => ({
         ...prev,
         name: prev.name || name,
@@ -81,9 +81,9 @@ export default function ClientForm() {
     setError(null);
     try {
       if (isEdit) {
-        await base44.entities.Client.update(id, form);
+        await clients.update(id, form);
       } else {
-        await base44.entities.Client.create(form);
+        await clients.create(form);
       }
       navigate('/');
     } catch (e) {

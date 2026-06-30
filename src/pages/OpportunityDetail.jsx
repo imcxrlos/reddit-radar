@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Copy, Save, Check, AlertCircle, FileText, Sparkles, MapPin } from 'lucide-react';
 import moment from 'moment';
-import { base44 } from '@/api/base44Client';
+import { opportunities, feedback } from '@/services/db';
+import { auth } from '@/services/auth';
 import IntentBadge from '@/components/IntentBadge';
 import StatusBadge from '@/components/StatusBadge';
 import MatchFeedback from '@/components/MatchFeedback';
@@ -37,8 +38,8 @@ export default function OpportunityDetail() {
   const load = async () => {
     try {
       const [data, user] = await Promise.all([
-        base44.entities.Opportunity.get(id),
-        base44.auth.me(),
+        opportunities.get(id),
+        auth.me(),
       ]);
       setOpp(data);
       setDraft(data.edited_response || data.draft_response || '');
@@ -56,7 +57,7 @@ export default function OpportunityDetail() {
     setSaving(true);
     setSaved(false);
     try {
-      await base44.entities.Opportunity.update(id, {
+      await opportunities.update(id, {
         edited_response: draft,
         internal_notes: notes,
         status,
@@ -92,7 +93,7 @@ export default function OpportunityDetail() {
 
       if (feedbackRecords.length > 0) {
         try {
-          await base44.entities.FeedbackRecord.bulkCreate(feedbackRecords);
+          await feedback.bulkCreate(feedbackRecords);
         } catch (e) {
           console.error('Feedback tracking failed:', e.message);
         }
