@@ -29,6 +29,13 @@
         "type": "string"
       }
     },
+    "expanded_keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "AI-generated synonyms and natural-language phrases for the client's keywords/services, produced once during onboarding. Used for deterministic Stage 1 candidate matching during monitoring."
+    },
     "subreddits": {
       "type": "array",
       "items": {

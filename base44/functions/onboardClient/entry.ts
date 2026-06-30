@@ -72,17 +72,19 @@ Provide recommendations for:
 
 1. KEYWORDS: 10-15 keywords and phrases to monitor on Reddit. These should capture how real people talk about problems related to this business — not just industry jargon. Include both direct terms ("car accident lawyer") and conversational phrases ("got rear ended", "insurance won't pay").
 
-2. SUBREDDITS: 8-15 relevant subreddits to monitor. Include:
+2. EXPANDED_KEYWORDS: A flat list of 40-80 synonyms, related terms, and natural-language phrases people actually type when describing problems this business can solve. Include the KEYWORDS and SERVICES from above AND their conversational variants. For example, for a car-accident practice: "car accident", "car crash", "auto accident", "hit my car", "got rear ended", "rear-ended", "car wreck", "totaled my car", "someone crashed into me", "ran a red light", "insurance won't pay". All lowercase, no duplicates. Be generous with phrasings a real Reddit poster would write — this list powers deterministic keyword matching during monitoring, so broader coverage here means fewer missed leads.
+
+3. SUBREDDITS: 8-15 relevant subreddits to monitor. Include:
    - Local city/state subreddits where the business operates (infer from website or business name)
    - Industry-specific communities (r/legaladvice, r/personalfinance, r/AskReddit for broader reach)
    - Problem-focused communities (r/insurance, r/CarAccident, etc.)
    List subreddit names WITHOUT the r/ prefix.
 
-3. LOCATIONS: Cities and states the business serves. Format as "City, State" entries. Pull these from the website content if available — do NOT invent locations they don't serve.
+4. LOCATIONS: Cities and states the business serves. Format as "City, State" entries. Pull these from the website content if available — do NOT invent locations they don't serve.
 
-4. SERVICES: 5-10 specific services or practice areas this business offers. Pull these DIRECTLY from their website content if available. Each service should be specific enough to filter leads (e.g., "Car Accidents", not just "Personal Injury"). These must match what they actually do.
+5. SERVICES: 5-10 specific services or practice areas this business offers. Pull these DIRECTLY from their website content if available. Each service should be specific enough to filter leads (e.g., "Car Accidents", not just "Personal Injury"). These must match what they actually do.
 
-5. RESPONSE_TONE: A recommended tone for Reddit responses (e.g., "Empathetic and professional, avoid legal jargon, offer genuine helpful advice first").
+6. RESPONSE_TONE: A recommended tone for Reddit responses (e.g., "Empathetic and professional, avoid legal jargon, offer genuine helpful advice first").
 
 Return your recommendations as JSON.`;
 
@@ -92,13 +94,14 @@ Return your recommendations as JSON.`;
         type: 'object',
         properties: {
           keywords: { type: 'array', items: { type: 'string' } },
+          expanded_keywords: { type: 'array', items: { type: 'string' } },
           subreddits: { type: 'array', items: { type: 'string' } },
           locations: { type: 'array', items: { type: 'string' } },
           services: { type: 'array', items: { type: 'string' } },
           response_tone: { type: 'string' },
           category: { type: 'string', description: 'Best-fit business category' },
         },
-        required: ['keywords', 'subreddits', 'services', 'response_tone'],
+        required: ['keywords', 'expanded_keywords', 'subreddits', 'services', 'response_tone'],
       },
       add_context_from_internet: true,
     });

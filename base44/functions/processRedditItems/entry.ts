@@ -4,46 +4,18 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 // STAGE 1 — Candidate Selection (programmatic, no AI)
 // ════════════════════════════════════════════════════════════════
 // A post is a "candidate" for a client when its text contains one of
-// that client's expanded keywords/services. Expansion adds obvious
-// synonyms so natural phrasings ("someone hit my car") still match a
-// configured term ("car accident"). Only candidates reach Stage 2.
+// that client's expanded keywords (synonyms + natural phrases generated
+// during onboarding and stored on the Client record). Only candidates
+// reach Stage 2.
 
-const SYNONYM_MAP = {
-  'car accident': ['car accident', 'car crash', 'auto accident', 'auto crash', 'hit my car', 'hit by a car', 'rear ended', 'rear-ended', 'rearended', 'rear end', 'car wreck', 'wreck', 'collision', 'totaled my car', 'car totaled', 'smashed my car', 'crashed my car', 'ran a red light'],
-  'truck accident': ['truck accident', 'truck crash', 'hit by a truck', 'semi accident', '18 wheeler', 'eighteen wheeler', 'big rig accident'],
-  'motorcycle accident': ['motorcycle accident', 'motorcycle crash', 'bike accident', 'motorcycle wreck'],
-  'pedestrian accident': ['pedestrian accident', 'hit while walking', 'hit as a pedestrian', 'run over', 'ran me over', 'struck while crossing'],
-  'personal injury': ['personal injury', 'injured', 'got hurt', 'i was hurt', 'hurt in', 'in pain', 'suffering injuries', 'suffered injuries', 'serious injuries'],
-  'slip and fall': ['slip and fall', 'slipped and fell', 'slipped on', 'trip and fall', 'tripped and fell', 'fell down', 'fell in', 'slipped'],
-  'dog bite': ['dog bite', 'dog attacked', 'bitten by a dog', 'dog attack', 'dog mauled', 'mauled by a dog'],
-  'medical malpractice': ['medical malpractice', 'doctor negligence', 'medical negligence', 'surgical error', 'misdiagnosis', 'misdiagnosed', 'surgery error', 'botched surgery', 'hospital negligence'],
-  'workers compensation': ['workers comp', 'workers compensation', "worker's comp", 'work injury', 'hurt at work', 'injured at work', 'injured on the job', 'on the job injury', 'workmans comp'],
-  'wrongful death': ['wrongful death', 'loved one died', 'family member killed', 'killed due to', 'died because of', 'death caused by', 'lost a loved one'],
-  'brain injury': ['brain injury', 'traumatic brain injury', 'tbi', 'head injury', 'concussion', 'concussed'],
-  'spinal injury': ['spinal injury', 'spinal cord injury', 'back injury', 'paralyzed', 'paralysis'],
-  'nursing home abuse': ['nursing home abuse', 'nursing home neglect', 'elder abuse', 'elder neglect'],
-  'premises liability': ['premises liability', 'injured at a store', 'hurt at a business', 'injured on someone\'s property'],
-  'product liability': ['product liability', 'defective product', 'product injured', 'hurt by a product'],
-  'dui accident': ['dui accident', 'drunk driver', 'drunk driving', 'hit by a drunk driver'],
-  'hit and run': ['hit and run', 'driver took off', 'fled the scene', 'driver ran off'],
-  // generic legal-intent signals
-  'lawyer': ['lawyer', 'attorney', 'legal help', 'legal advice', 'do i have a case', 'can i sue', 'should i sue', 'sue', 'lawsuit', 'file a claim', 'compensation', 'settlement', 'insurance offer', 'what are my rights'],
-  'attorney': ['lawyer', 'attorney', 'legal help', 'legal advice'],
-};
-
-function expandTerm(term) {
-  const key = String(term).toLowerCase().trim();
-  if (SYNONYM_MAP[key]) return SYNONYM_MAP[key];
-  return [key];
-}
-
+// Expanded keywords are generated once during AI client onboarding and
+// stored on the Client record, so Stage 1 stays deterministic and AI-free.
+// Clients onboarded before this field existed fall back to keywords + services.
 function expandClientTerms(client) {
-  const terms = [...(client.keywords || []), ...(client.services || [])];
-  const expanded = new Set();
-  for (const t of terms) {
-    for (const e of expandTerm(t)) expanded.add(e);
-  }
-  return [...expanded];
+  const source = (client.expanded_keywords && client.expanded_keywords.length)
+    ? client.expanded_keywords
+    : [...(client.keywords || []), ...(client.services || [])];
+  return [...new Set(source.map(t => String(t).toLowerCase().trim()).filter(Boolean))];
 }
 
 // Returns the list of clients this post is a candidate for, plus the
