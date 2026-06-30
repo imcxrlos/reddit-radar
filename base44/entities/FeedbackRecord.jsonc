@@ -11,11 +11,42 @@
     "feedback_type": {
       "type": "string",
       "enum": [
+        "match_feedback",
         "client_override",
         "intent_disagreement",
         "draft_edited"
       ],
-      "default": "draft_edited"
+      "default": "draft_edited",
+      "description": "Kind of feedback recorded"
+    },
+    "reviewer_decision": {
+      "type": "string",
+      "enum": [
+        "good",
+        "bad"
+      ],
+      "description": "Good Match / Bad Match verdict (match_feedback only)"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "wrong_client",
+        "not_a_lead",
+        "wrong_location",
+        "wrong_category_service",
+        "low_intent",
+        "poor_ai_draft",
+        "other"
+      ],
+      "description": "Required when reviewer_decision is bad"
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional reviewer note"
+    },
+    "final_status": {
+      "type": "string",
+      "description": "Opportunity status at the time feedback was recorded"
     },
     "ai_client_name": {
       "type": "string"
@@ -25,6 +56,10 @@
     },
     "ai_intent_score": {
       "type": "number"
+    },
+    "ai_reasoning": {
+      "type": "string",
+      "description": "AI match reasoning captured at feedback time"
     },
     "ai_draft_response": {
       "type": "string"

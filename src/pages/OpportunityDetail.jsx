@@ -5,6 +5,7 @@ import moment from 'moment';
 import { base44 } from '@/api/base44Client';
 import IntentBadge from '@/components/IntentBadge';
 import StatusBadge from '@/components/StatusBadge';
+import MatchFeedback from '@/components/MatchFeedback';
 
 function timeAgo(date) {
   const m = moment(date);
@@ -226,6 +227,8 @@ export default function OpportunityDetail() {
               )}
             </div>
           </div>
+
+          <MatchFeedback opp={opp} reviewer={reviewer} />
         </div>
 
         {/* Response Workspace */}
