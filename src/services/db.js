@@ -28,3 +28,10 @@ export const feedback = {
   create: (data) => base44.entities.FeedbackRecord.create(data),
   bulkCreate: (records) => base44.entities.FeedbackRecord.bulkCreate(records),
 };
+
+/**
+ * Default namespace export — use `import db from '@/services/db'` and call
+ * `db.opportunities.list(...)`, `db.clients.get(id)`, etc. This avoids name
+ * clashes with component-local state (e.g. a local `opportunities` array).
+ */
+export default { opportunities, clients, feedback };
