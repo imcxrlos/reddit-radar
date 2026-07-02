@@ -102,7 +102,7 @@ export default function OpportunityTable({ opportunities }) {
                           href={o.reddit_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="p-1.5 text-muted-foreground hover:text-accent hover:bg-secondary rounded-lg transition-colors"
+                          className="p-1.5 text-accent hover:text-accent/80 hover:bg-accent/10 rounded-lg transition-colors"
                           title="Open on Reddit"
                         >
                           <ExternalLink className="w-4 h-4" />

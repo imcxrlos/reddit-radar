@@ -146,7 +146,14 @@ export default function OpportunityDetail() {
             <p className="text-sm text-muted-foreground mt-0.5">Review and manage this lead</p>
           </div>
         </div>
-        <StatusBadge status={status} />
+        <div className="flex items-center gap-3">
+          {opp.reddit_url && (
+            <a href={opp.reddit_url} target="_blank" rel="noreferrer" className="btn-primary">
+              <ExternalLink className="w-4 h-4" /> View on Reddit
+            </a>
+          )}
+          <StatusBadge status={status} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
