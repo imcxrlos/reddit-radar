@@ -127,7 +127,11 @@ Provide recommendations for:
 
    Return as a JSON array of objects: [{"phrase": "got rear ended", "tier": "anchor"}, {"phrase": "lawyer", "tier": "modifier"}, ...]
 
-3. SUBREDDITS: 8-15 relevant subreddits to monitor WITHOUT the r/ prefix. Include local city/state subreddits, industry-specific communities, and problem-focused communities.
+3. SUBREDDITS: 8-12 subreddits to monitor WITHOUT the r/ prefix. ONLY include subreddits where a potential client — someone experiencing a problem this business solves — would realistically post. Use exactly three categories:
+   (a) LOCAL community subreddits for each city/state the business serves (e.g., Atlanta, Georgia, CummingGA, MariettaGA).
+   (b) LEGAL / professional-advice communities where people ask for help with the relevant problem (e.g., legaladvice, Insurance).
+   (c) Problem- or incident-specific communities directly tied to a service the business actually offers (e.g., CarAccident, PersonalInjury, WorkersCompensation, SlipAndFall).
+   NEVER include: enthusiast or hobby communities (cars, motorcycles, gaming), entertainment, general discussion, news, true crime, or any community tied to a profession this business does NOT practice (e.g., do NOT suggest MedicalMalpractice for a car-accident firm). Every subreddit must map to a service the business offers or a location it serves. Prefer real, active subreddits.
 
 4. LOCATIONS: Cities and states the business serves, formatted as "City, State". Pull from website content if available. Do NOT invent locations they don't serve.
 
@@ -244,6 +248,13 @@ Return your recommendations as JSON.`;
       cleanedKeywords.push(phrase);
     }
     result.keywords = cleanedKeywords.slice(0, 20);
+
+    // ── Clean subreddits: strip r/ prefix, case-insensitive dedup, cap ──
+    result.subreddits = (result.subreddits || [])
+      .map(s => String(s).replace(/^r\//i, '').trim())
+      .filter(Boolean)
+      .filter((s, i, arr) => arr.findIndex(x => x.toLowerCase() === s.toLowerCase()) === i)
+      .slice(0, 15);
 
     // ── Persist back to client when regenerating ──
     if (client_id) {
