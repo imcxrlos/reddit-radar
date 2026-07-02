@@ -286,9 +286,29 @@ function sleep(ms) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user.role !== 'admin') return Response.json({ error: 'Admin only' }, { status: 403 });
+
+    // Allow admin manual invocation OR scheduled (no-user) context.
+    const user = await base44.auth.me().catch(() => null);
+    if (user && user.role !== 'admin') {
+      return Response.json({ error: 'Admin only' }, { status: 403 });
+    }
+
+    // Day/night cadence guard (America/New_York, DST-safe).
+    // The automation fires every 30 min. During the 11pm–6am local window we
+    // skip the :30 firing so nighttime collection runs hourly, not every 30 min.
+    const now = new Date();
+    const etParts = now.toLocaleString('en-US', {
+      timeZone: 'America/New_York', hour12: false, hour: '2-digit', minute: '2-digit'
+    });
+    const etHour = parseInt(etParts.slice(0, 2), 10);
+    const etMinute = parseInt(etParts.slice(3, 5), 10);
+    const isNight = etHour >= 23 || etHour < 6;
+    if (isNight && etMinute >= 30) {
+      return Response.json({
+        message: 'Night window (hourly cadence) — skipping this 30-min firing.',
+        skipped: true
+      });
+    }
 
     const provider = getRedditProvider();
 
