@@ -12,6 +12,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import ClientForm from './pages/ClientForm';
 import OpportunityDetail from './pages/OpportunityDetail';
+import RejectedCandidates from './pages/RejectedCandidates';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -53,6 +54,7 @@ const AuthenticatedApp = () => {
           <Route path="/clients/new" element={<ClientForm />} />
           <Route path="/clients/:id/edit" element={<ClientForm />} />
           <Route path="/opportunity/:id" element={<OpportunityDetail />} />
+          <Route path="/admin/rejections" element={<RejectedCandidates />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import db from '@/services/db';
-import { Radar } from 'lucide-react';
+import { Radar, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/lib/AuthContext';
 import StatsCards from '@/components/StatsCards';
 import FilterBar from '@/components/FilterBar';
 import OpportunityTable from '@/components/OpportunityTable';
 import QuickFilters from '@/components/QuickFilters';
 import ClientList from '@/components/ClientList';
-import RejectedCandidateTable from '@/components/RejectedCandidateTable';
 
 const emptyFilters = {
   search: '', client: '', status: '', category: '', subreddit: '', location: '', state: '',
@@ -17,8 +18,8 @@ export default function Dashboard() {
   const [tab, setTab] = useState('opportunities');
   const [opportunities, setOpportunities] = useState([]);
   const [clients, setClients] = useState([]);
-  const [rejections, setRejections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState(emptyFilters);
   const [activeQuickFilters, setActiveQuickFilters] = useState([]);
@@ -27,14 +28,12 @@ export default function Dashboard() {
 
   const loadData = async () => {
     try {
-      const [opps, cls, rejs] = await Promise.all([
+      const [opps, cls] = await Promise.all([
         db.opportunities.list('-created_date', 500),
         db.clients.list(),
-        db.rejections.list('-created_date', 200),
       ]);
       setOpportunities(opps);
       setClients(cls);
-      setRejections(rejs);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -137,15 +136,16 @@ export default function Dashboard() {
             >
               Clients
             </button>
-            <button
-              onClick={() => setTab('rejections')}
-              className={`px-4 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
-                tab === 'rejections' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Rejections
-            </button>
           </div>
+          {user?.role === 'admin' && (
+            <Link
+              to="/admin/rejections"
+              className="ml-2 p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
+              title="Rejection Audit (Admin)"
+            >
+              <ShieldCheck className="w-4 h-4" />
+            </Link>
+          )}
         </div>
       </header>
 
@@ -170,20 +170,12 @@ export default function Dashboard() {
           />
           <OpportunityTable opportunities={filtered} />
         </div>
-      ) : tab === 'clients' ? (
+      ) : (
         <div className="p-6 md:p-10 max-w-7xl mx-auto">
           <div className="mb-8">
             <h1 className="text-[28px] font-semibold text-foreground tracking-tight">Clients</h1>
           </div>
           <ClientList clients={clients} />
-        </div>
-      ) : (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-[28px] font-semibold text-foreground tracking-tight">Rejected Candidates</h1>
-            <p className="text-sm text-muted-foreground mt-1">{rejections.length} Stage 2 rejections · audit log for pipeline validation</p>
-          </div>
-          <RejectedCandidateTable items={rejections} />
         </div>
       )}
     </div>
