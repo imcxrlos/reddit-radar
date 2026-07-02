@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import db from '@/services/db';
 import { Radar, ShieldCheck } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
+import { toast } from '@/components/ui/use-toast';
 import StatsCards from '@/components/StatsCards';
 import FilterBar from '@/components/FilterBar';
 import OpportunityTable from '@/components/OpportunityTable';
@@ -20,6 +21,18 @@ export default function Dashboard() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleRejectionAccess = () => {
+    if (user?.role === 'admin') {
+      navigate('/admin/rejections');
+    } else {
+      toast({
+        title: 'Developer Access Only',
+        description: 'The rejection audit is restricted to the app developer.',
+      });
+    }
+  };
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState(emptyFilters);
   const [activeQuickFilters, setActiveQuickFilters] = useState([]);
@@ -137,15 +150,13 @@ export default function Dashboard() {
               Clients
             </button>
           </div>
-          {user?.role === 'admin' && (
-            <Link
-              to="/admin/rejections"
-              className="ml-2 p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
-              title="Rejection Audit (Admin)"
-            >
-              <ShieldCheck className="w-4 h-4" />
-            </Link>
-          )}
+          <button
+            onClick={handleRejectionAccess}
+            className="ml-2 p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
+            title="Rejection Audit"
+          >
+            <ShieldCheck className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
