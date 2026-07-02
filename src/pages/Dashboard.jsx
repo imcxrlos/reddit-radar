@@ -6,6 +6,7 @@ import FilterBar from '@/components/FilterBar';
 import OpportunityTable from '@/components/OpportunityTable';
 import QuickFilters from '@/components/QuickFilters';
 import ClientList from '@/components/ClientList';
+import RejectedCandidateTable from '@/components/RejectedCandidateTable';
 
 const emptyFilters = {
   search: '', client: '', status: '', category: '', subreddit: '', location: '', state: '',
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const [tab, setTab] = useState('opportunities');
   const [opportunities, setOpportunities] = useState([]);
   const [clients, setClients] = useState([]);
+  const [rejections, setRejections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState(emptyFilters);
@@ -25,12 +27,14 @@ export default function Dashboard() {
 
   const loadData = async () => {
     try {
-      const [opps, cls] = await Promise.all([
+      const [opps, cls, rejs] = await Promise.all([
         db.opportunities.list('-created_date', 500),
         db.clients.list(),
+        db.rejections.list('-created_date', 200),
       ]);
       setOpportunities(opps);
       setClients(cls);
+      setRejections(rejs);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -133,6 +137,14 @@ export default function Dashboard() {
             >
               Clients
             </button>
+            <button
+              onClick={() => setTab('rejections')}
+              className={`px-4 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
+                tab === 'rejections' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Rejections
+            </button>
           </div>
         </div>
       </header>
@@ -158,12 +170,20 @@ export default function Dashboard() {
           />
           <OpportunityTable opportunities={filtered} />
         </div>
-      ) : (
+      ) : tab === 'clients' ? (
         <div className="p-6 md:p-10 max-w-7xl mx-auto">
           <div className="mb-8">
             <h1 className="text-[28px] font-semibold text-foreground tracking-tight">Clients</h1>
           </div>
           <ClientList clients={clients} />
+        </div>
+      ) : (
+        <div className="p-6 md:p-10 max-w-7xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-[28px] font-semibold text-foreground tracking-tight">Rejected Candidates</h1>
+            <p className="text-sm text-muted-foreground mt-1">{rejections.length} Stage 2 rejections · audit log for pipeline validation</p>
+          </div>
+          <RejectedCandidateTable items={rejections} />
         </div>
       )}
     </div>

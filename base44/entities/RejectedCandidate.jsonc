@@ -1,0 +1,96 @@
+{
+  "name": "RejectedCandidate",
+  "type": "object",
+  "properties": {
+    "reddit_item_id": {
+      "type": "string",
+      "description": "Internal RedditItem ID that reached Stage 2 but was rejected"
+    },
+    "reddit_id": {
+      "type": "string",
+      "description": "Reddit platform post/comment ID"
+    },
+    "reddit_title": {
+      "type": "string"
+    },
+    "reddit_url": {
+      "type": "string"
+    },
+    "reddit_body": {
+      "type": "string"
+    },
+    "subreddit": {
+      "type": "string"
+    },
+    "author": {
+      "type": "string"
+    },
+    "matched_anchors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Stage 1 anchor phrases that matched in the post text"
+    },
+    "matched_modifiers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Stage 1 modifier terms that appeared in the post"
+    },
+    "candidate_clients": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Names of all clients that passed Stage 1 anchor matching"
+    },
+    "recommended_client_id": {
+      "type": "string",
+      "description": "Client ID the AI considered best, if any (even if rejected)"
+    },
+    "recommended_client_name": {
+      "type": "string"
+    },
+    "ai_reasoning": {
+      "type": "string",
+      "description": "AI match_reasoning output explaining the verification decision"
+    },
+    "rejection_reason": {
+      "type": "string",
+      "enum": [
+        "location_mismatch",
+        "service_mismatch",
+        "not_a_lead",
+        "low_intent",
+        "other"
+      ],
+      "description": "AI-provided primary reason for rejection"
+    },
+    "rejection_detail": {
+      "type": "string",
+      "description": "One-sentence specific explanation from the AI"
+    },
+    "ai_summary": {
+      "type": "string"
+    },
+    "detected_location": {
+      "type": "string"
+    },
+    "detected_category": {
+      "type": "string"
+    },
+    "intent_score": {
+      "type": "number",
+      "default": 0
+    },
+    "decision_path": {
+      "type": "string",
+      "description": "Stage 1 decision summary"
+    }
+  },
+  "required": [
+    "reddit_item_id"
+  ]
+}

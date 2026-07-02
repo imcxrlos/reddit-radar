@@ -89,7 +89,9 @@ const ANALYSIS_SCHEMA = {
     match_reasoning: { type: 'string', description: 'Bullet reasoning: service match + location verification + intent evidence' },
     competitor_mentions: { type: 'array', items: { type: 'string' }, description: 'Competitor names mentioned' },
     summary: { type: 'string', description: '2-3 sentence summary of what the person needs' },
-    draft_response: { type: 'string', description: 'A helpful, natural, non-spammy reply the team can review and post' },
+    draft_response: { type: 'string', description: 'A helpful, natural, non-spammy reply the team can review and post. If no client matched, leave empty.' },
+    rejection_reason: { type: 'string', enum: ['location_mismatch', 'service_mismatch', 'not_a_lead', 'low_intent', 'other'], description: 'Primary reason this candidate was rejected. Provide when is_lead=false OR no client matched. Empty if accepted as a lead.' },
+    rejection_detail: { type: 'string', description: 'One sentence explaining the specific rejection (e.g. "Poster is in Texas but client serves Georgia"). Empty if accepted.' },
   },
   required: ['is_lead', 'intent_score', 'summary', 'draft_response'],
 };
@@ -214,6 +216,7 @@ Deno.serve(async (req) => {
     let oppCreatedCount = 0;
     let oppUpdatedCount = 0;
     let needsReviewCount = 0;
+    let rejectedCount = 0;
 
     for (const item of unprocessed) {
       try {
@@ -292,6 +295,35 @@ Deno.serve(async (req) => {
             ...engagementData,
           });
           oppCreatedCount++;
+        } else {
+          // ── Stage 2 rejected — persist audit record for pipeline validation ──
+          const allAnchors = [...new Set(candidates.flatMap(c => c.matchedAnchors))];
+          const allModifiers = [...new Set(candidates.flatMap(c => c.matchedModifiers))];
+          const candidateNames = candidates.map(c => c.client.name);
+
+          await base44.asServiceRole.entities.RejectedCandidate.create({
+            reddit_item_id: item.id,
+            reddit_id: item.reddit_id || '',
+            reddit_title: item.title || (item.body ? item.body.substring(0, 120) : ''),
+            reddit_url: item.url || (item.permalink ? `https://www.reddit.com${item.permalink}` : ''),
+            reddit_body: item.body || '',
+            subreddit: item.subreddit,
+            author: item.author || '',
+            matched_anchors: allAnchors,
+            matched_modifiers: allModifiers,
+            candidate_clients: candidateNames,
+            recommended_client_id: matchedClientId,
+            recommended_client_name: analysis.matched_client_name || '',
+            ai_reasoning: analysis.match_reasoning || '',
+            rejection_reason: analysis.rejection_reason || 'other',
+            rejection_detail: analysis.rejection_detail || '',
+            ai_summary: analysis.summary || '',
+            detected_location: analysis.detected_location || '',
+            detected_category: analysis.detected_category || '',
+            intent_score: analysis.intent_score || 0,
+            decision_path: 'Qualified via Anchor match (Stage 2 rejected)',
+          });
+          rejectedCount++;
         }
 
         await base44.asServiceRole.entities.RedditItem.update(item.id, {
@@ -305,13 +337,14 @@ Deno.serve(async (req) => {
     }
 
     return Response.json({
-      message: `Stage 1 selected ${candidateCount} candidates (skipped ${skippedCount}). Stage 2 processed ${processedCount} — created ${oppCreatedCount} opportunities (${needsReviewCount} need review), updated ${oppUpdatedCount} existing.`,
+      message: `Stage 1 selected ${candidateCount} candidates (skipped ${skippedCount}). Stage 2 processed ${processedCount} — created ${oppCreatedCount} opportunities (${needsReviewCount} need review), rejected ${rejectedCount}, updated ${oppUpdatedCount} existing.`,
       processed: processedCount,
       candidates: candidateCount,
       skipped: skippedCount,
       opportunities_created: oppCreatedCount,
       opportunities_updated: oppUpdatedCount,
       needs_review: needsReviewCount,
+      rejected: rejectedCount,
     });
   } catch (error) {
     console.error('processRedditItems error:', error);
