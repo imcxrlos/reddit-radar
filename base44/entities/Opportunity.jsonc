@@ -101,6 +101,24 @@
     },
     "handled_by": {
       "type": "string"
+    },
+    "matched_anchors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Stage 1 anchor phrases that matched in the Reddit post text and qualified it as a candidate"
+    },
+    "matched_modifiers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Stage 1 modifier terms that appeared in the post (context only, did not qualify the post alone)"
+    },
+    "decision_path": {
+      "type": "string",
+      "description": "Stage 1 decision summary, e.g. 'Qualified via Anchor match' \u2014 shows why the post was selected for AI review"
     }
   },
   "required": [

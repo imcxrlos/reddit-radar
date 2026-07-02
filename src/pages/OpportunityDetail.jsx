@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Copy, Save, Check, AlertCircle, FileText, Sparkles, MapPin } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Copy, Save, Check, AlertCircle, FileText, Sparkles, MapPin, ShieldCheck } from 'lucide-react';
 import moment from 'moment';
 import { opportunities, feedback } from '@/services/db';
 import { auth } from '@/services/auth';
@@ -173,6 +173,37 @@ export default function OpportunityDetail() {
               </a>
             )}
           </div>
+
+          {/* Stage 1 Match Audit */}
+          {(opp.matched_anchors?.length > 0 || opp.matched_modifiers?.length > 0 || opp.decision_path) && (
+            <div className="card-premium p-6">
+              <h3 className="text-sm font-semibold text-foreground mb-5 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-accent" /> Stage 1 Match Audit
+              </h3>
+              <div className="mb-4">
+                <p className="text-[11px] text-muted-foreground mb-1.5 font-medium uppercase tracking-wider">Decision</p>
+                <p className="text-sm font-medium text-foreground">{opp.decision_path || '—'}</p>
+              </div>
+              <div className="mb-4">
+                <p className="text-[11px] font-medium text-emerald-600 mb-2 uppercase tracking-wider">Matched Anchors</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(opp.matched_anchors || []).map((a, i) => (
+                    <span key={i} className="inline-flex items-center px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-medium border border-emerald-100">{a}</span>
+                  ))}
+                  {(opp.matched_anchors || []).length === 0 && <span className="text-xs text-muted-foreground">None</span>}
+                </div>
+              </div>
+              <div>
+                <p className="text-[11px] font-medium text-amber-600 mb-2 uppercase tracking-wider">Matched Modifiers</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(opp.matched_modifiers || []).map((m, i) => (
+                    <span key={i} className="inline-flex items-center px-2.5 py-1 bg-amber-50 text-amber-700 rounded-lg text-xs font-medium border border-amber-100">{m}</span>
+                  ))}
+                  {(opp.matched_modifiers || []).length === 0 && <span className="text-xs text-muted-foreground">None</span>}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* AI Analysis */}
           <div className="card-premium p-6">

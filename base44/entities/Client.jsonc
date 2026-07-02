@@ -32,9 +32,27 @@
     "expanded_keywords": {
       "type": "array",
       "items": {
-        "type": "string"
+        "type": "object",
+        "properties": {
+          "phrase": {
+            "type": "string",
+            "description": "The keyword or phrase to match against Reddit post text (lowercase)"
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "anchor",
+              "modifier"
+            ],
+            "description": "anchor = incident/injury/problem-specific phrase that qualifies a post as a Stage 1 candidate; modifier = generic professional term that adds context but never qualifies a post alone"
+          }
+        },
+        "required": [
+          "phrase",
+          "tier"
+        ]
       },
-      "description": "AI-generated synonyms and natural-language phrases for the client's keywords/services, produced once during onboarding. Used for deterministic Stage 1 candidate matching during monitoring."
+      "description": "AI-generated phrases classified by tier. Anchor phrases qualify a post as a Stage 1 candidate; modifier phrases only add context. Produced during onboarding for deterministic monitoring."
     },
     "subreddits": {
       "type": "array",

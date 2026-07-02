@@ -1,39 +1,75 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // ════════════════════════════════════════════════════════════════
-// STAGE 1 — Candidate Selection (programmatic, no AI)
+// STAGE 1 — Candidate Selection (deterministic, no AI)
 // ════════════════════════════════════════════════════════════════
-// A post is a "candidate" for a client when its text contains one of
-// that client's expanded keywords (synonyms + natural phrases generated
-// during onboarding and stored on the Client record). Only candidates
-// reach Stage 2.
+// Dual-tier matching:
+//   ANCHOR phrases  → incident/injury/problem-specific. ≥1 match = candidate.
+//   MODIFIER terms  → generic professional words. Never qualify alone.
+//
+// A post becomes a candidate for a client ONLY when it contains at
+// least one anchor phrase from that client's expanded_keywords.
+// Modifier-only matches are discarded — they add noise, not signal.
 
-// Expanded keywords are generated once during AI client onboarding and
-// stored on the Client record, so Stage 1 stays deterministic and AI-free.
-// Clients onboarded before this field existed fall back to keywords + services.
-function expandClientTerms(client) {
-  const source = (client.expanded_keywords && client.expanded_keywords.length)
-    ? client.expanded_keywords
-    : [...(client.keywords || []), ...(client.services || [])];
-  return [...new Set(source.map(t => String(t).toLowerCase().trim()).filter(Boolean))];
+// Parse a client's expanded_keywords into anchor and modifier arrays.
+// Handles both the new structured format [{phrase, tier}] and the
+// legacy string[] format (treated as anchors for backward compat).
+function getClientKeywords(client) {
+  const expanded = client.expanded_keywords || [];
+  const anchors = [];
+  const modifiers = [];
+
+  for (const entry of expanded) {
+    if (typeof entry === 'string') {
+      const phrase = entry.toLowerCase().trim();
+      if (phrase) anchors.push(phrase);
+    } else if (entry && typeof entry === 'object') {
+      const phrase = String(entry.phrase || '').toLowerCase().trim();
+      if (!phrase) continue;
+      if (entry.tier === 'modifier') {
+        modifiers.push(phrase);
+      } else {
+        anchors.push(phrase);
+      }
+    }
+  }
+
+  // Fallback for clients onboarded before expanded_keywords existed.
+  if (anchors.length === 0 && modifiers.length === 0) {
+    const fallback = [...(client.keywords || []), ...(client.services || [])];
+    for (const k of fallback) {
+      const phrase = String(k).toLowerCase().trim();
+      if (phrase) anchors.push(phrase);
+    }
+  }
+
+  return { anchors, modifiers };
 }
 
-// Returns the list of clients this post is a candidate for, plus the
-// matched term for each (used as a hint to the AI in Stage 2).
+// Returns candidates: one entry per client where ≥1 anchor matched.
+// Each entry carries the matched anchors/modifiers for audit storage.
 function selectCandidates(item, clients) {
   const text = ((item.title || '') + ' ' + (item.body || '')).toLowerCase();
   if (!text.trim()) return [];
   const candidates = [];
   for (const client of clients) {
-    const terms = expandClientTerms(client);
-    const hit = terms.find(t => text.includes(t));
-    if (hit) candidates.push({ client, matchedTerm: hit });
+    const { anchors, modifiers } = getClientKeywords(client);
+    const matchedAnchors = anchors.filter(a => text.includes(a));
+    if (matchedAnchors.length === 0) continue; // modifier-only → discard
+
+    const matchedModifiers = modifiers.filter(m => text.includes(m));
+    candidates.push({
+      client,
+      matchedAnchors,
+      matchedModifiers,
+      decisionPath: 'Qualified via Anchor match',
+    });
   }
   return candidates;
 }
 
 // ════════════════════════════════════════════════════════════════
-// STAGE 2 — AI Verification (only candidates)
+// STAGE 2 — AI Verification (candidates only)
 // ════════════════════════════════════════════════════════════════
 
 const ANALYSIS_SCHEMA = {
@@ -74,15 +110,16 @@ function buildCategorySection(categoryDefs) {
     }).join('\n\n');
 }
 
-function buildPrompt(item, candidateClients, categoryDefs) {
-  const roster = candidateClients.map(({ client, matchedTerm }) => ({
+function buildPrompt(item, candidates, categoryDefs) {
+  const roster = candidates.map(({ client, matchedAnchors, matchedModifiers }) => ({
     id: client.id,
     name: client.name,
     category: client.category,
     locations: client.locations || [],
     services: client.services || [],
     response_tone: client.response_tone || 'professional and helpful',
-    stage1_matched_term: matchedTerm,
+    stage1_matched_anchors: matchedAnchors,
+    stage1_matched_modifiers: matchedModifiers,
   }));
 
   const content = item.title
@@ -93,7 +130,7 @@ function buildPrompt(item, candidateClients, categoryDefs) {
     ? new Date(item.reddit_created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : 'unknown';
 
-  return `You are a lead intelligence analyst. Stage 1 (keyword + synonym matching) has already determined this Reddit ${item.type} is a CANDIDATE for the clients listed below. Your job in Stage 2 is to VERIFY — do not assume the candidate is a real lead.
+  return `You are a lead intelligence analyst. Stage 1 (deterministic keyword matching) has already determined this Reddit ${item.type} is a CANDIDATE for the clients listed below — it matched at least one high-intent "anchor" phrase. Your job in Stage 2 is to VERIFY — do not assume the candidate is a real lead.
 
 REDDIT POST/COMMENT:
 Subreddit: r/${item.subreddit}
@@ -101,7 +138,7 @@ Author: u/${item.author}
 Posted: ${postDate}
 ${content}
 
-CANDIDATE CLIENTS (already pre-filtered by keyword match):
+CANDIDATE CLIENTS (pre-filtered by Stage 1 anchor match):
 ${JSON.stringify(roster, null, 2)}
 
 CATEGORY DEFINITIONS (for categorization only):
@@ -180,11 +217,10 @@ Deno.serve(async (req) => {
 
     for (const item of unprocessed) {
       try {
-        // ── Stage 1: candidate selection (no AI) ──
+        // ── Stage 1: deterministic candidate selection ──
         const candidates = selectCandidates(item, clients);
 
         if (candidates.length === 0) {
-          // Not a candidate for any client — skip AI entirely.
           await base44.asServiceRole.entities.RedditItem.update(item.id, {
             processed: true,
             processed_at: new Date().toISOString(),
@@ -208,6 +244,11 @@ Deno.serve(async (req) => {
         const matchedClient = matchedClientId ? clientMap.get(matchedClientId) : null;
         const existingOpp = oppByItemId.get(item.id);
 
+        // Find the Stage 1 match summary for the AI-selected client.
+        const matchedCandidate = matchedClientId
+          ? candidates.find(c => c.client.id === matchedClientId)
+          : null;
+
         const engagementData = {
           reddit_score: item.score || 0,
           reddit_num_comments: item.num_comments || 0,
@@ -217,7 +258,6 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.Opportunity.update(existingOpp.id, engagementData);
           oppUpdatedCount++;
         } else if (isLead && matchedClient) {
-          // Only create an opportunity when a client genuinely matched.
           if (needsReview) needsReviewCount++;
 
           const title = item.title || (item.body ? item.body.substring(0, 120) : 'Untitled');
@@ -246,6 +286,9 @@ Deno.serve(async (req) => {
             match_reasoning: analysis.match_reasoning || '',
             draft_response: analysis.draft_response || '',
             status: 'new',
+            matched_anchors: matchedCandidate ? matchedCandidate.matchedAnchors : [],
+            matched_modifiers: matchedCandidate ? matchedCandidate.matchedModifiers : [],
+            decision_path: matchedCandidate ? matchedCandidate.decisionPath : '',
             ...engagementData,
           });
           oppCreatedCount++;
