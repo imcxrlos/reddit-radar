@@ -295,16 +295,17 @@ Deno.serve(async (req) => {
 
     // Day/night cadence guard (America/New_York, DST-safe).
     // Automation fires every 2 hours (at even ET hours). During the 11pm–6am
-    // night window we skip every other firing so collection runs every 4 hours.
+    // night window we run only ONCE (at 4am ET) — a clean 6-hour gap from the
+    // last day firing at 10pm — so collection runs once per night.
     const now = new Date();
     const etParts = now.toLocaleString('en-US', {
       timeZone: 'America/New_York', hour12: false, hour: '2-digit', minute: '2-digit'
     });
     const etHour = parseInt(etParts.slice(0, 2), 10);
     const isNight = etHour >= 23 || etHour < 6;
-    if (isNight && etHour % 4 !== 0) {
+    if (isNight && etHour !== 4) {
       return Response.json({
-        message: 'Night window (4-hour cadence) — skipping this 2-hour firing.',
+        message: 'Night window (6-hour cadence) — skipping this 2-hour firing. Next night run at 4am ET.',
         skipped: true
       });
     }
